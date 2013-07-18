@@ -40,6 +40,8 @@
 ;; SLIME - END
 
 ;; octave file extension
-(autoload 'octave-mode "octave-mod" nil t)
 (setq auto-mode-alist
       (cons '("\\.m$" . octave-mode) auto-mode-alist))
+
+;; use python3
+ (setq python-shell-interpreter "/usr/bin/python3")
