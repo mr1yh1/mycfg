@@ -5,7 +5,10 @@
 (setq inhibit-startup-screen t)
 
 ;; no-tool bar
-(tool-bar-mode nil)
+(tool-bar-mode -1)
+
+;; no menubar
+(tool-bar-mode -1)
 
 ;;
 (show-paren-mode 't)
@@ -35,3 +38,8 @@
 (global-set-key [f12] 'slime-selector)
 
 ;; SLIME - END
+
+;; octave file extension
+(autoload 'octave-mode "octave-mod" nil t)
+(setq auto-mode-alist
+      (cons '("\\.m$" . octave-mode) auto-mode-alist))
