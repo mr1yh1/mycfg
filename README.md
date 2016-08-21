@@ -1,4 +1,4 @@
 mycfg
 =====
 
-I will keep my settings here. 
+My configuration files.
