@@ -80,7 +80,7 @@
 (require 'package)
 (setq package-enable-at-startup nil)
 (setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
-			 ("melpa" . "https://melpa.org/packages/")))
+                         ("melpa" . "https://melpa.org/packages/")))
 
 (setq package-enable-at-startup nil)
 (package-initialize)
@@ -89,7 +89,6 @@
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
-
 
 (require 'use-package)
 (require 'diminish)
@@ -100,13 +99,6 @@
   :config (auto-compile-on-load-mode))
 
 (use-package dash)
-
-;; ;; utils
-;; (use-package smartparens
-;;   :demand t
-;;   :config
-;;   (require 'smartparens-config)
-;;   (smartparens-global-strict-mode))
 
 (use-package paredit
   :commands (enable-paredit-mode))
@@ -159,12 +151,11 @@
   :demand t
   :init
   (setq ido-use-faces t)
-  (setq ido-file-extensions-order '(".clj" ".lisp" ".org" ".el" ".emacs"))
+  (setq ido-file-extensions-order '(".lisp" ".org" ".el" ".emacs"))
   (setq ido-use-filename-at-point 'guess)
   :config
   (ido-mode 1)
   (ido-everywhere 1))
-
 
 (use-package ido-ubiquitous
   :commands (ido-ubiquitous-should-use-old-style-default)
@@ -193,9 +184,11 @@
 (use-package smex
   :bind
   (("M-x" . smex)
-   ("M-X" . smex-major-mode-commands)))
+   ("M-X" . smex-major-mode-commands)
+   ;; This is your old M-x.
+   ("C-c C-c M-x" . execute-extended-command)))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; COMPANY
 (use-package company
   :demand t
@@ -209,25 +202,13 @@
   :config
   (global-company-mode 1))
 
-;; (use-package company-quickhelp
-;;   :defer t
-;;   :config
-;;   (company-quickhelp-mode 1))
-
-;; (use-package company-statistics)
-;; (add-hook 'after-init-hook 'company-statistics-mode)
+(use-package company-quickhelp
+  :defer t
+  :config
+  (company-quickhelp-mode 1))
 
 (use-package imenu-anywhere
   :bind ("C-x C-." . ido-imenu-anywhere))
-
-(use-package yasnippet
-  ;;:diminish yas-minor-mode
-  :init
-  (setq yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
-  (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
-  :config
-  (add-to-list 'company-backends 'company-yasnippet)
-  (yas-global-mode 1))
 
 ;; projects
 (use-package magit
@@ -241,27 +222,9 @@
   :config
   (projectile-global-mode))
 
-;; IRC
-(use-package rcirc
-  :defer t
-  :config
-  (setq rcirc-default-nick "mr1yh1"
-        rcirc-default-user-name "mr1yh1"
-        rcirc-default-full-name "Omer"
-        rcirc-server-alist '(("irc.freenode.net"
-                              :nick "mr1yh1"
-                              :channels ("#clojure" "#emacs")))
-        rcirc-omit-responses '("JOIN" "PART" "QUIT" "NICK" "AWAY")
-        ;; auth values in .private
-        rcirc-debug-flag t)
-  (set (make-local-variable 'scroll-conservatively) 8192)
-  (rcirc-track-minor-mode 1)
-  (flyspell-mode 1))
-
 ;; search the web
 (use-package engine-mode
   :commands (defengine engine/set-keymap-prefix engine-mode engine/get-query engine/execute-search)
-  :defer t
   ;;(setq engine/browser-function 'eww-browse-url)
   :config
   (engine-mode t)
@@ -274,26 +237,99 @@
   (defengine github "https://github.com/search?ref=simplesearch&q=%s" :keybinding "h")
   (defengine amazon "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s" :keybinding "a"))
 
-(use-package sunshine
-  :commands (sunshine-forecast)
+;; ;; LATEX
+(require 'tex) ;; first install package auctex
+(use-package auctex-latexmk)
+(use-package company-auctex)
+
+(use-package company-math
+  :defer t
+  :config
+  (add-to-list 'company-backends '(company-math-symbols-latex company-latex-commands)))
+
+;;;; PROGRAMMING
+
+;;; CEDET
+(load-file (concat user-emacs-directory "git/cedet/cedet-devel-load.el"))
+(load-file (concat user-emacs-directory "git/cedet/contrib/cedet-contrib-load.el"))
+
+;; semantic
+(use-package semantic
+  :config
+  (require 'cl)
+  (require 'semantic/ia)
+  (require 'semantic/bovine/gcc)
+  ;; add includes
+  ;; (semantic-add-system-include "/usr/include/" 'c-mode)
+  (semantic-load-enable-excessive-code-helpers)
+  (global-semantic-idle-completions-mode 1)
+  (global-semantic-idle-local-symbol-highlight-mode 1)
+  (global-semantic-idle-scheduler-mode 1)
+  (global-semantic-idle-summary-mode 1)
+
+  (global-semantic-decoration-mode 1)
+  (global-semantic-highlight-func-mode 1)
+  (global-semantic-show-unmatched-syntax-mode 1)
+  (global-semantic-tag-folding-mode 1)
+  ;; (setq-mode-local c-mode semanticdb-find-default-throttle  '(project unloaded system recursive))
+  (setq semantic-idle-scheduler-idle-time 3)
+  (when (cedet-gnu-global-version-check t)
+    (semanticdb-enable-gnu-global-databases 'c-mode)
+    (semanticdb-enable-gnu-global-databases 'c++-mode))
+  (when (cedet-ectag-version-check t)
+    (semantic-load-enable-primary-exuberent-ctags-support))
+  ;; (setq qt4-base-dir "/usr/include/qt4")
+  ;; (semantic-add-system-include qt4-base-dir 'c++-mode)
+  ;; (add-to-list 'auto-mode-alist (cons qt4-base-dir 'c++-mode))
+  ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig.h"))
+  ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig-dist.h"))
+  ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qglobal.h"))
+
+  (global-semanticdb-minor-mode 1)
+  (semantic-mode 1))
+
+;; (global-set-key (kbd "C-, +")  'senator-fold-tag-toggle)
+
+;; ede
+(use-package ede
+  :config
+  ;; (ede-cpp-root-project "Test"
+  ;;                       :name "Test Project"
+  ;;                       :file "~/work/project/CMakeLists.txt"
+  ;;                       :include-path '("/"
+  ;;                                       "/Common"
+  ;;                                       "/Interfaces"
+  ;;                                       "/Libs"
+  ;;                                       )
+  ;;                       :system-include-path '("~/exp/include")
+  ;;                       :spp-table '(("isUnix" . "")
+  ;;                                    ("BOOST_TEST_DYN_LINK" . "")))
+  (global-ede-mode 1))
+
+;; emacs code browser
+(use-package ecb
   :init
-  (setq sunshine-location "Istanbul"
-        sunshine-units 'metric
-        sunshine-show-icons t
-        ;;appid is in .private
-        ))
+  (setq ecb-new-ecb-frame nil)
+  (setq ecb-layout-name 'left3)
+  (setq ecb-windows-height 0.20)
+  (setq ecb-windows-width 0.20)
+  (setq ecb-examples-bufferinfo-buffer-name nil)
+  (setq ecb-compile-window-height nil)
+  ;;(setq ecb-display-news-for-upgrade nil)
+  ;;(setq ecb-display-upgraded-options nil)
+  :mode (("C-c. lw" . ecb-toggle-ecb-windows))
+  )
 
-;; programming
-
-(require 'ede)
-(global-ede-mode 1)
+;;
+(use-package projectile)
 
 (use-package flycheck
   :commands (flycheck-add-mode)
   :config
-  (flycheck-add-mode 'html-tidy 'web-mode))
+  ;;(flycheck-add-mode 'html-tidy 'web-mode)
+  )
 
-;; C/C++ TODO: semantic ?
+;; C/C++
 (use-package company-c-headers
   :defer t
   :init
@@ -318,37 +354,138 @@
   :defer t
   :init
   (setq slime-net-coding-system 'utf-8-unix)
-  (setq inferior-lisp-program "sbcl --dynamic-space-size 4096")
-  ;;(setq inferior-lisp-program "/opt/ccl/lx86cl64")
-  (setq common-lisp-hyperspec-root "/home/omer/Documents/HyperSpec-7-0/HyperSpec/")
+  (setq slime-lisp-implementations
+        '((sbcl ("sbcl")
+                :coding-system utf-8-unix
+                :program-args "--dynamic-space-size 1024")
+          (clisp ("clisp"))
+          (ecl ("ecl"))))
+
+  (setq common-lisp-hyperspec-root "/home/omer/Documents/HyperSpec/")
   :config
   (slime-setup '(slime-fancy slime-company)))
 
-;; elp the profiler, ielm the repl, edebug the debugger.
-
-;; (use-package redshank
-;;   :defer t
-;;   :init
-;;   (require 'slime)
-;;   ;;(setq redshank-install-lisp-support nil)
-;;   :config
-;;   (require 'redshank-loader)
-;;   (redshank-setup '(lisp-mode-hook slime-repl-mode-hook) t))
-
-;; CLOJURE
-(use-package cider
-  :commands (cider-jack-in cider-jack-in-clojurescript)
-  :init
-  (add-hook 'clojure-mode-hook 'cider-mode)
-  (setq nrepl-hide-special-buffers t)
-  (setq cider-show-error-buffer nil)
-  (setq cider-repl-pop-to-buffer-on-connect nil)
-  (setq cider-repl-wrap-history t)
-  (setq cider-repl-history-file "~/.emacs.d/.cider-repl-history")
-  (add-hook 'cider-mode-hook 'eldoc-mode)
-  (add-hook 'cider-repl-mode-hook 'subword-mode))
+;; assembly
+(use-package llvm-mode)
+(use-package autodisass-java-bytecode)
+;;(use-package autodisass-llvm)
 
 ;; WEB
+(use-package js2-mode
+  :mode  (("\\.js$" . js2-mode)))
+
+
+;; C/C++ development Environment
+(use-package ggtags
+  :defer t
+  :bind (("M-." . ggtags-find-tag-dwim))
+  :config
+  (add-hook 'c-mode-common-hook
+            (lambda ()
+              (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+                (setq-local imenu-create-index-function
+                            #'ggtags-build-imenu-index)
+                (ggtags-mode 1)))))
+
+;; C styles: gnu, linux, bsd, java etc..
+(require 'cc-mode)
+(add-hook 'c-mode-hook
+          (lambda ()
+            (setq c-default-style "gnu")
+            (hs-minor-mode)))
+
+(use-package gdb-mi
+  :init
+  (setq gdb-many-windows t
+        gdb-show-main t))
+
+;;; STARTUP
+(add-hook 'after-init-hook
+          (lambda ()
+            (global-flycheck-mode)
+            (recentf-open-files)))
+
+;; buggy there
+(add-hook 'asm-mode-hook
+          (lambda ()
+            (aggressive-indent-mode -1)))
+
+;; pretty lambda
+(defun my-pretty-lambda ()
+  "Make some word or string show as pretty Unicode symbols."
+  (setq prettify-symbols-alist
+        '(
+          ("lambda" . 955) ; λ
+          )))
+
+(add-hook 'lisp-mode-hook 'my-pretty-lambda)
+(global-prettify-symbols-mode 1)
+
+;; IRC
+(use-package rcirc
+  :defer t
+  :config
+  (setq rcirc-default-nick "mr1yh1"
+        rcirc-default-user-name "mr1yh1"
+        rcirc-default-full-name "Omer"
+        rcirc-server-alist '(("irc.freenode.net"
+                              :nick "mr1yh1"
+                              :channels ("#clojure" "#emacs")))
+        rcirc-omit-responses '("JOIN" "PART" "QUIT" "NICK" "AWAY")
+        ;; auth values in .private
+        rcirc-debug-flag t)
+  (set (make-local-variable 'scroll-conservatively) 8192)
+  (rcirc-track-minor-mode 1)
+  (flyspell-mode 1))
+
+(provide '.emacs)
+;;; .emacs ends here
+
+;; (defun ede-object-system-include-path ()
+;;   "Return the system include path for the current buffer."
+;;   (when ede-object
+;;     (ede-system-include-path ede-object)))
+
+;; (ede-project-directories
+;;    (quote
+;;     ("/home/omer/tmp/deneme/include" "/home/omer/tmp/deneme/src" "/home/omer/tmp/deneme")))
+
+;; GNUS
+;; (use-package gnus
+;;   :defer t
+;;   :init
+;;   (setq gnus-read-newsrc-file nil)
+;;   (setq gnus-save-killed-list nil)
+;;   (setq gnus-check-new-newsgroups nil)
+;;   (setq gnus-select-method '(nnspool ""))
+;;   (setq gnus-secondary-select-methods '((nntp "news.gmane.org")
+;;                                         (nnmbox "")))
+;;   (setq gnus-use-cache t)
+;;   (setq mail-sources
+;;         '((file)
+;;           (pop :server "pop.mail.yahoo.com"
+;;                :port 995
+;;                :user "mr1yh1@yahoo.com"
+;;                :stream ssl
+;;                )))
+;;   (setq mail-source-delete-incoming nil)
+
+;;   (setq message-send-mail-function 'smtpmail-send-it
+;;         send-mail-function    'smtpmail-send-it
+;;         smtpmail-smtp-server  "smtp.mail.yahoo.com"
+;;         smtpmail-stream-type  'ssl
+;;         smtpmail-smtp-service 465))
+
+;; (use-package skewer-mode
+;;   :config
+;;   (add-hook 'js2-mode-hook 'skewer-mode)
+;;   (add-hook 'css-mode-hook 'skewer-css-mode)
+;;   (add-hook 'html-mode-hook 'skewer-html-mode))
+
+;; (use-package tern
+;;   :defer t
+;;   :config (add-hook 'js-mode-hook (lambda () (tern-mode t))))
+
 ;; (use-package web-mode
 ;;   :mode (("\\.js$" . web-mode)
 ;;          ("\\.html$" . web-mode))
@@ -364,11 +501,6 @@
 ;; (use-package impatient-mode :defer t)
 ;; (use-package know-your-http-well :defer t)
 
-;; ;; LATEX
-;; (use-package company-math
-;;   :defer t
-;;   :config
-;;   (add-to-list 'company-backends '(company-math-symbols-latex company-latex-commands)))
 
 ;; ;; R OCTAVE JULIA ETC...
 ;; (use-package ess
@@ -376,85 +508,64 @@
 ;;   ;;:disabled t
 ;;   )
 
+;; elp the profiler, ielm the repl, edebug the debugger.
 
-;;(add-hook 'after-init-hook #'global-flycheck-mode)
-
-;; (ede-project-directories
-;;    (quote
-;;     ("/home/tamer/tmp/deneme/include" "/home/tamer/tmp/deneme/src" "/home/tamer/tmp/deneme")))
-
-;; C/C++ development Environment
-
-;; (use-package ggtags
+;; (use-package redshank
 ;;   :defer t
-;;   :bind (("M-." . ggtags-find-tag-dwim))
+;;   :init
+;;   (require 'slime)
+;;   ;;(setq redshank-install-lisp-support nil)
 ;;   :config
-;;   (add-hook 'c-mode-common-hook
-;;             (lambda ()
-;;               (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-;;                 (setq-local imenu-create-index-function
-;;                             #'ggtags-build-imenu-index)
-;;                 (ggtags-mode 1)))))
+;;   (require 'redshank-loader)
+;;   (redshank-setup '(lisp-mode-hook slime-repl-mode-hook) t))
 
-;; ;; hs-minor-mode for folding source code
-;; (add-hook 'c-mode-common-hook 'hs-minor-mode)
-
-
-;; C styles: gnu, linux, bsd, java etc..
-;; “gnu”: The default style for GNU projects
-;; “bsd”: What BSD developers use, aka “Allman style” after Eric Allman.
-;; “linux”: What the Linux developers use for kernel development
-;; “java”: The default style for java-mode (see below)
-(require 'cc-mode)
-(add-hook 'c-mode-hook
-          (lambda ()
-            (setq c-default-style "gnu")))
-
-;; ;; setup GDB
-(setq gdb-many-windows t
-      gdb-show-main t)
+;; ;; CLOJURE
+;; (use-package cider
+;;   :commands (cider-jack-in cider-jack-in-clojurescript)
+;;   :init
+;;   (add-hook 'clojure-mode-hook 'cider-mode)
+;;   (setq nrepl-hide-special-buffers t)
+;;   (setq cider-show-error-buffer nil)
+;;   (setq cider-repl-pop-to-buffer-on-connect nil)
+;;   (setq cider-repl-wrap-history t)
+;;   (setq cider-repl-history-file "~/.emacs.d/.cider-repl-history")
+;;   (add-hook 'cider-mode-hook 'eldoc-mode)
+;;   (add-hook 'cider-repl-mode-hook 'subword-mode))
 
 
-;; (defun ede-object-system-include-path ()
-;;   "Return the system include path for the current buffer."
-;;   (when ede-object
-;;     (ede-system-include-path ede-object)))
+;; (use-package sunshine
+;;   :commands (sunshine-forecast)
+;;   :init
+;;   (setq sunshine-location "Istanbul"
+;;         sunshine-units 'metric
+;;         sunshine-show-icons t
+;;         ;;appid is in .private
+;;         ))
 
-;; GNUS
-(use-package gnus
-  :init
-  (setq gnus-read-newsrc-file nil)
-  (setq gnus-save-killed-list nil)
-  (setq gnus-check-new-newsgroups nil)
-  (setq gnus-select-method '(nnspool ""))
-  (setq gnus-secondary-select-methods '((nntp "news.gmane.org")
-                                        (nnmbox "")))
-  (setq gnus-use-cache t)
-  (setq mail-sources
-        '((file)
-          (pop :server "pop.mail.yahoo.com"
-               :port 995
-               :user "mr1yh1@yahoo.com"
-               :stream ssl
-               )))
-  (setq mail-source-delete-incoming nil)
+;; (use-package company-statistics)
+;; (add-hook 'after-init-hook 'company-statistics-mode)
 
-  (setq message-send-mail-function 'smtpmail-send-it
-        send-mail-function    'smtpmail-send-it
-        smtpmail-smtp-server  "smtp.mail.yahoo.com"
-        smtpmail-stream-type  'ssl
-        smtpmail-smtp-service 465))
+;; (use-package yasnippet
+;;   ;;:diminish yas-minor-mode
+;;   :init
+;;   (setq yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
+;;   (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
+;;   :config
+;;   (add-to-list 'company-backends 'company-yasnippet)
+;;   (yas-global-mode 1))
 
-;;; STARTUP
-(add-hook 'after-init-hook
-          (lambda ()
-            (global-flycheck-mode)
-            (recentf-open-files)))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ecb-layout-name "left8")
+ '(ecb-options-version "2.40"))
 
-;; buggy there
-(add-hook 'asm-mode-hook
-          (lambda ()
-            (aggressive-indent-mode -1)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 
-(provide '.emacs)
-;;; .emacs ends here
