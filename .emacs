@@ -271,6 +271,7 @@
   (global-semantic-highlight-func-mode 1)
   (global-semantic-show-unmatched-syntax-mode 1)
   (global-semantic-tag-folding-mode 1)
+  (global-semantic-mru-bookmark-mode 1)
   ;; (setq-mode-local c-mode semanticdb-find-default-throttle  '(project unloaded system recursive))
   (setq semantic-idle-scheduler-idle-time 3)
   (when (cedet-gnu-global-version-check t)
