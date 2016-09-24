@@ -365,7 +365,7 @@
           (clisp ("clisp"))
           (ecl ("ecl"))))
 
-  (setq common-lisp-hyperspec-root "/home/tamer/Documents/HyperSpec/")
+  (setq common-lisp-hyperspec-root "/home/omer/Documents/HyperSpec/")
   :config
   (slime-setup '(slime-fancy slime-company)))
 
@@ -437,7 +437,6 @@
 ;; file from https://gist.github.com/emallson/0eae865bc99fc9639fac
 (load-file (concat user-emacs-directory "git/nodejs-repl-eval.el"))
 
-(define-key js2-mode-map (kbd "C-c C-r") 'nodejs-repl-eval-region)
 (define-key js2-mode-map (kbd "C-c C-e") 'nodejs-repl-eval-dwim)
 (define-key js2-mode-map (kbd "C-c C-b") 'nodejs-repl-eval-buffer)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -515,7 +514,7 @@
 
 ;; (ede-project-directories
 ;;    (quote
-;;     ("/home/tamer/tmp/deneme/include" "/home/tamer/tmp/deneme/src" "/home/tamer/tmp/deneme")))
+;;     ("/home/omer/tmp/deneme/include" "/home/omer/tmp/deneme/src" "/home/omer/tmp/deneme")))
 
 ;; GNUS
 ;; (use-package gnus
