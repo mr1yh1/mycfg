@@ -4,7 +4,7 @@
 (setq user-full-name "Omer YILMAZ"
       user-mail-address "mr1yh1@yahoo.com")
 
-(load "~/.emacs.d/.private" t)
+;;(load "~/.emacs.d/.private" t)
 
 ;; UTF-8
 (prefer-coding-system 'utf-8)
@@ -137,8 +137,8 @@
 ;; color theme
 (use-package color-theme-modern)
 
-(use-package zenburn-theme
-  :config (load-theme 'zenburn t))
+;;(use-package zenburn-theme
+;;  :config (load-theme 'zenburn t))
 
 (use-package powerline
   :commands (powerline-set-selected-window)
@@ -195,15 +195,18 @@
   :init
   ;;:diminish company-mode
   :bind (:map company-active-map
-              ("\C-n" . company-select-next)
-              ("\C-p" . company-select-previous)
-              ("\C-d" . company-show-doc-buffer)
-              ("M-." . company-show-location))
+              ("C-s" . company-select-next)
+              ("C-r" . company-select-previous)
+              ("C-d" . company-show-doc-buffer)
+              ("C-e" . company-other-backend))
   :config
+  (define-key global-map (kbd "C-.") 'company-files)
   (global-company-mode 1))
 
+
+
 (use-package company-quickhelp
-  :defer t
+  :demand t
   :config
   (company-quickhelp-mode 1))
 
@@ -286,6 +289,7 @@
   ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig-dist.h"))
   ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qglobal.h"))
 
+  (global-srecode-minor-mode 1)
   (global-semanticdb-minor-mode 1)
   (semantic-mode 1))
 
@@ -327,8 +331,7 @@
 (use-package flycheck
   :commands (flycheck-add-mode)
   :config
-  ;;(flycheck-add-mode 'html-tidy 'web-mode)
-  )
+  (flycheck-add-mode 'html-tidy 'web-mode))
 
 ;; C/C++
 (use-package company-c-headers
@@ -362,7 +365,7 @@
           (clisp ("clisp"))
           (ecl ("ecl"))))
 
-  (setq common-lisp-hyperspec-root "/home/omer/Documents/HyperSpec/")
+  (setq common-lisp-hyperspec-root "/home/tamer/Documents/HyperSpec/")
   :config
   (slime-setup '(slime-fancy slime-company)))
 
@@ -373,8 +376,71 @@
 
 ;; WEB
 (use-package js2-mode
-  :mode  (("\\.js$" . js2-mode)))
+  :mode  (("\\.js$" . js2-mode)
+          ("\\.json$" . js2-mode)))
 
+(use-package tern
+  ;; {
+  ;; "libs": [
+  ;;          "browser",
+  ;;          "jquery"
+  ;;          ],
+  ;; "plugins": {
+  ;; "node": {}
+  ;; }
+  ;; }
+  :defer t
+  :config
+  (add-hook 'js-mode-hook (lambda () (tern-mode t))))
+
+(use-package company-tern
+  :config
+  (eval-after-load 'company
+    '(add-to-list 'company-backends 'company-tern)))
+
+(use-package simple-httpd)
+;; (use-package skewer-mode
+;;   :config
+;;   (add-hook 'js2-mode-hook 'skewer-mode)
+;;   (add-hook 'css-mode-hook 'skewer-css-mode)
+;;   (add-hook 'html-mode-hook 'skewer-html-mode))
+
+(use-package web-mode
+  :mode (;; ("\\.js$" . web-mode)
+         ("\\.html$" . web-mode))
+  :config
+  (setq web-mode-code-indent-offset 2
+        web-mode-css-indent-offset 2
+        web-mode-markup-indent-offset 2))
+
+(use-package company-web :defer t
+  :config
+  (add-to-list 'company-backends 'company-web-html))
+
+(use-package impatient-mode :defer t)
+
+(use-package web-beautify
+  :config
+  (eval-after-load 'js2-mode
+    '(define-key js2-mode-map (kbd "C-c b") 'web-beautify-js))
+  (eval-after-load 'json-mode
+    '(define-key json-mode-map (kbd "C-c b") 'web-beautify-js))
+  (eval-after-load 'sgml-mode
+    '(define-key html-mode-map (kbd "C-c b") 'web-beautify-html))
+  (eval-after-load 'web-mode
+    '(define-key web-mode-map (kbd "C-c b") 'web-beautify-html))
+  (eval-after-load 'css-mode
+    '(define-key css-mode-map (kbd "C-c b") 'web-beautify-css)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package nodejs-repl)
+;; file from https://gist.github.com/emallson/0eae865bc99fc9639fac
+(load-file (concat user-emacs-directory "git/nodejs-repl-eval.el"))
+
+(define-key js2-mode-map (kbd "C-c C-r") 'nodejs-repl-eval-region)
+(define-key js2-mode-map (kbd "C-c C-e") 'nodejs-repl-eval-dwim)
+(define-key js2-mode-map (kbd "C-c C-b") 'nodejs-repl-eval-buffer)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; C/C++ development Environment
 (use-package ggtags
@@ -449,7 +515,7 @@
 
 ;; (ede-project-directories
 ;;    (quote
-;;     ("/home/omer/tmp/deneme/include" "/home/omer/tmp/deneme/src" "/home/omer/tmp/deneme")))
+;;     ("/home/tamer/tmp/deneme/include" "/home/tamer/tmp/deneme/src" "/home/tamer/tmp/deneme")))
 
 ;; GNUS
 ;; (use-package gnus
@@ -477,30 +543,10 @@
 ;;         smtpmail-stream-type  'ssl
 ;;         smtpmail-smtp-service 465))
 
-;; (use-package skewer-mode
-;;   :config
-;;   (add-hook 'js2-mode-hook 'skewer-mode)
-;;   (add-hook 'css-mode-hook 'skewer-css-mode)
-;;   (add-hook 'html-mode-hook 'skewer-html-mode))
 
 ;; (use-package tern
 ;;   :defer t
 ;;   :config (add-hook 'js-mode-hook (lambda () (tern-mode t))))
-
-;; (use-package web-mode
-;;   :mode (("\\.js$" . web-mode)
-;;          ("\\.html$" . web-mode))
-;;   :config
-;;   (setq web-mode-code-indent-offset 2
-;;         web-mode-css-indent-offset 2
-;;         web-mode-markup-indent-offset 2))
-
-;; (use-package company-web :defer t
-;;   :config
-;;   (add-to-list 'company-backends 'company-web-html))
-
-;; (use-package impatient-mode :defer t)
-;; (use-package know-your-http-well :defer t)
 
 
 ;; ;; R OCTAVE JULIA ETC...
@@ -555,6 +601,12 @@
 ;;   (add-to-list 'company-backends 'company-yasnippet)
 ;;   (yas-global-mode 1))
 
+;; NOT WORKING
+;; (eval-after-load 'company
+;;   '(progn
+;;      (define-key company-active-map (kbd "TAB") 'company-complete)
+;;      (define-key company-active-map [tab] 'company-complete)))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -569,4 +621,3 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
