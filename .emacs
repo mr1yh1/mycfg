@@ -4,7 +4,13 @@
 (setq user-full-name "Omer YILMAZ"
       user-mail-address "mr1yh1@yahoo.com")
 
-;;(load "~/.emacs.d/.private" t)
+(setq source-directory "/opt/emacs-25.1/")
+
+(load "~/.emacs.d/_private" t)
+;; load new CEDET before build-in CEDET is loaded.
+;; git clone http://git.code.sf.net/p/cedet/git cedet
+(load-file (concat user-emacs-directory "git/cedet/cedet-devel-load.el"))
+(load-file (concat user-emacs-directory "git/cedet/contrib/cedet-contrib-load.el"))
 
 ;; UTF-8
 (prefer-coding-system 'utf-8)
@@ -31,6 +37,7 @@
 (savehist-mode 1)
 
 ;; basics
+(set-frame-font "DejaVu Sans Mono 14")
 (setq inhibit-startup-message t
       inhibit-startup-echo-area-message t)
 (tool-bar-mode -1)
@@ -114,36 +121,33 @@
 (use-package guide-key
   :demand t
   :diminish guide-key-mode
-  :init
-  (setq guide-key/guide-key-sequence t)
   :config
+  (setq guide-key/guide-key-sequence t)
   (guide-key-mode 1))
 
-(use-package expand-region
-  :bind (("C-=" . er/expand-region)
-         ("M-=" . er/contract-region)))
+(use-package edit-indirect
+  :bind (("C-c >" . edit-indirect-region)))
 
 (use-package winner)
 
 (use-package undo-tree
   :demand t
   :diminish undo-tree-mode
-  :init
+  :config
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t)
-  :config
   (global-undo-tree-mode))
 
 ;; color theme
 (use-package color-theme-modern)
 
-;;(use-package zenburn-theme
-;;  :config (load-theme 'zenburn t))
+(use-package zenburn-theme
+  :config (load-theme 'zenburn t))
 
-(use-package powerline
-  :commands (powerline-set-selected-window)
-  :config
-  (powerline-default-theme))
+  (use-package powerline
+    :commands (powerline-set-selected-window)
+    :config
+    (powerline-default-theme))
 
 ;; ido
 (use-package ido
@@ -163,10 +167,9 @@
   (ido-ubiquitous-mode 1))
 
 (use-package ido-vertical-mode
-  :init
+  :config
   (setq ido-vertical-show-count t)
   (setq ido-vertical-define-keys 'C-n-and-C-p-only)
-  :config
   (ido-vertical-mode 1))
 
 (use-package flx-ido
@@ -188,6 +191,17 @@
    ;; This is your old M-x.
    ("C-c C-c M-x" . execute-extended-command)))
 
+;;; ORG-MODE
+(use-package org
+  :config
+  (setq org-todo-keywords
+        '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
+  (setq org-tags-alist
+        '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
+  (define-key global-map "\C-cl" 'org-store-link)
+  (define-key global-map "\C-ca" 'org-agenda)
+  (setq org-log-done 'time)
+  (setq org-agenda-files (list "~/org/agenda.org")))
 
 ;; COMPANY
 (use-package company
@@ -201,9 +215,8 @@
               ("C-e" . company-other-backend))
   :config
   (define-key global-map (kbd "C-.") 'company-files)
+  (define-key global-map (kbd "C-M-.") 'company-complete)
   (global-company-mode 1))
-
-
 
 (use-package company-quickhelp
   :demand t
@@ -213,6 +226,14 @@
 (use-package imenu-anywhere
   :bind ("C-x C-." . ido-imenu-anywhere))
 
+(use-package yasnippet
+  ;;:diminish yas-minor-mode
+  :config
+  (setq yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
+  (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
+  (add-to-list 'company-backends 'company-yasnippet)
+  (yas-global-mode 1))
+
 ;; projects
 (use-package magit
   :bind ("C-x g" . magit-status))
@@ -220,9 +241,8 @@
 (use-package projectile
   :defer t
   :diminish projectile-mode
-  :init
-  (setq projectile-enable-caching t)
   :config
+  (setq projectile-enable-caching t)
   (projectile-global-mode))
 
 ;; search the web
@@ -241,6 +261,7 @@
   (defengine amazon "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s" :keybinding "a"))
 
 ;; ;; LATEX
+;;(use-package auctex)
 (require 'tex) ;; first install package auctex
 (use-package auctex-latexmk)
 (use-package company-auctex)
@@ -252,48 +273,26 @@
 
 ;;;; PROGRAMMING
 
-;;; CEDET
-(load-file (concat user-emacs-directory "git/cedet/cedet-devel-load.el"))
-(load-file (concat user-emacs-directory "git/cedet/contrib/cedet-contrib-load.el"))
-
 ;; semantic
 (use-package semantic
+  :commands (semantic-load-enable-excessive-code-helpers)
   :config
-  (require 'cl)
-  (require 'semantic/ia)
-  (require 'semantic/bovine/gcc)
-  ;; add includes
-  ;; (semantic-add-system-include "/usr/include/" 'c-mode)
   (semantic-load-enable-excessive-code-helpers)
-  (global-semantic-idle-completions-mode 1)
-  (global-semantic-idle-local-symbol-highlight-mode 1)
-  (global-semantic-idle-scheduler-mode 1)
-  (global-semantic-idle-summary-mode 1)
-
-  (global-semantic-decoration-mode 1)
-  (global-semantic-highlight-func-mode 1)
-  (global-semantic-show-unmatched-syntax-mode 1)
-  (global-semantic-tag-folding-mode 1)
-  (global-semantic-mru-bookmark-mode 1)
-  ;; (setq-mode-local c-mode semanticdb-find-default-throttle  '(project unloaded system recursive))
-  (setq semantic-idle-scheduler-idle-time 3)
   (when (cedet-gnu-global-version-check t)
     (semanticdb-enable-gnu-global-databases 'c-mode)
     (semanticdb-enable-gnu-global-databases 'c++-mode))
-  (when (cedet-ectag-version-check t)
-    (semantic-load-enable-primary-exuberent-ctags-support))
+  (global-set-key (kbd "C-c C-f")  'senator-fold-tag-toggle)
+
+  ;; adding includes
+  ;; (semantic-add-system-include "/usr/include/" 'c-mode)
   ;; (setq qt4-base-dir "/usr/include/qt4")
   ;; (semantic-add-system-include qt4-base-dir 'c++-mode)
   ;; (add-to-list 'auto-mode-alist (cons qt4-base-dir 'c++-mode))
   ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig.h"))
-  ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig-dist.h"))
-  ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qglobal.h"))
 
-  (global-srecode-minor-mode 1)
-  (global-semanticdb-minor-mode 1)
-  (semantic-mode 1))
-
-;; (global-set-key (kbd "C-, +")  'senator-fold-tag-toggle)
+  ;; (global-srecode-minor-mode 1) ;; yas ?
+  
+  )
 
 ;; ede
 (use-package ede
@@ -336,13 +335,24 @@
 ;; C/C++
 (use-package company-c-headers
   :defer t
-  :init
+  :config
   (setq company-c-headers-path-system '("/usr/include"))
   (setq company-c-headers-path-user '(""))
-  :config
   (add-to-list 'company-backends 'company-c-headers))
 
+;;; LISP
+(defun my-pretty-lambda ()
+  "Make some word or string show as pretty Unicode symbols."
+  (setq prettify-symbols-alist
+        '(
+          ("lambda" . 955) ; λ
+          )))
+
+(add-hook 'lisp-mode-hook 'my-pretty-lambda)
+(global-prettify-symbols-mode 1)
+
 ;; ELISP
+;; elp profiler, ielm repl, edebug debugger, reshank for refactoring.
 (use-package elisp-slime-nav
   :diminish elisp-slime-nav-mode
   :init
@@ -380,6 +390,7 @@
           ("\\.json$" . js2-mode)))
 
 (use-package tern
+  ;; put thins into .tern_project
   ;; {
   ;; "libs": [
   ;;          "browser",
@@ -398,50 +409,15 @@
   (eval-after-load 'company
     '(add-to-list 'company-backends 'company-tern)))
 
-(use-package simple-httpd)
-;; (use-package skewer-mode
-;;   :config
-;;   (add-hook 'js2-mode-hook 'skewer-mode)
-;;   (add-hook 'css-mode-hook 'skewer-css-mode)
-;;   (add-hook 'html-mode-hook 'skewer-html-mode))
-
-(use-package web-mode
-  :mode (;; ("\\.js$" . web-mode)
-         ("\\.html$" . web-mode))
-  :config
-  (setq web-mode-code-indent-offset 2
-        web-mode-css-indent-offset 2
-        web-mode-markup-indent-offset 2))
-
-(use-package company-web :defer t
-  :config
-  (add-to-list 'company-backends 'company-web-html))
-
-(use-package impatient-mode :defer t)
-
-(use-package web-beautify
-  :config
-  (eval-after-load 'js2-mode
-    '(define-key js2-mode-map (kbd "C-c b") 'web-beautify-js))
-  (eval-after-load 'json-mode
-    '(define-key json-mode-map (kbd "C-c b") 'web-beautify-js))
-  (eval-after-load 'sgml-mode
-    '(define-key html-mode-map (kbd "C-c b") 'web-beautify-html))
-  (eval-after-load 'web-mode
-    '(define-key web-mode-map (kbd "C-c b") 'web-beautify-html))
-  (eval-after-load 'css-mode
-    '(define-key css-mode-map (kbd "C-c b") 'web-beautify-css)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package nodejs-repl)
 ;; file from https://gist.github.com/emallson/0eae865bc99fc9639fac
 (load-file (concat user-emacs-directory "git/nodejs-repl-eval.el"))
-
 (define-key js2-mode-map (kbd "C-c C-e") 'nodejs-repl-eval-dwim)
 (define-key js2-mode-map (kbd "C-c C-b") 'nodejs-repl-eval-buffer)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; C/C++ development Environment
+(use-package simple-httpd)
+
+;; C/C++
 (use-package ggtags
   :defer t
   :bind (("M-." . ggtags-find-tag-dwim))
@@ -461,9 +437,10 @@
             (hs-minor-mode)))
 
 (use-package gdb-mi
-  :init
+  :config
   (setq gdb-many-windows t
         gdb-show-main t))
+
 
 ;;; STARTUP
 (add-hook 'after-init-hook
@@ -475,17 +452,6 @@
 (add-hook 'asm-mode-hook
           (lambda ()
             (aggressive-indent-mode -1)))
-
-;; pretty lambda
-(defun my-pretty-lambda ()
-  "Make some word or string show as pretty Unicode symbols."
-  (setq prettify-symbols-alist
-        '(
-          ("lambda" . 955) ; λ
-          )))
-
-(add-hook 'lisp-mode-hook 'my-pretty-lambda)
-(global-prettify-symbols-mode 1)
 
 ;; IRC
 (use-package rcirc
@@ -504,10 +470,20 @@
   (rcirc-track-minor-mode 1)
   (flyspell-mode 1))
 
+
+(use-package sunshine
+  :commands (sunshine-forecast)
+  :config
+  (setq sunshine-location "Istanbul"
+        sunshine-units 'metric
+        sunshine-show-icons t
+        ;;appid is in .private
+        ))
+
 (provide '.emacs)
 ;;; .emacs ends here
 
-;; (defun ede-object-system-include-path ()
+;; (Defun ede-object-system-include-path ()
 ;;   "Return the system include path for the current buffer."
 ;;   (when ede-object
 ;;     (ede-system-include-path ede-object)))
@@ -554,8 +530,6 @@
 ;;   ;;:disabled t
 ;;   )
 
-;; elp the profiler, ielm the repl, edebug the debugger.
-
 ;; (use-package redshank
 ;;   :defer t
 ;;   :init
@@ -578,42 +552,17 @@
 ;;   (add-hook 'cider-mode-hook 'eldoc-mode)
 ;;   (add-hook 'cider-repl-mode-hook 'subword-mode))
 
-
-;; (use-package sunshine
-;;   :commands (sunshine-forecast)
-;;   :init
-;;   (setq sunshine-location "Istanbul"
-;;         sunshine-units 'metric
-;;         sunshine-show-icons t
-;;         ;;appid is in .private
-;;         ))
-
-;; (use-package company-statistics)
-;; (add-hook 'after-init-hook 'company-statistics-mode)
-
-;; (use-package yasnippet
-;;   ;;:diminish yas-minor-mode
-;;   :init
-;;   (setq yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
-;;   (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
-;;   :config
-;;   (add-to-list 'company-backends 'company-yasnippet)
-;;   (yas-global-mode 1))
-
-;; NOT WORKING
-;; (eval-after-load 'company
-;;   '(progn
-;;      (define-key company-active-map (kbd "TAB") 'company-complete)
-;;      (define-key company-active-map [tab] 'company-complete)))
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ecb-layout-name "left8")
- '(ecb-options-version "2.40"))
-
+ '(column-number-mode t)
+ '(ecb-layout-name "left8" t)
+ '(ecb-options-version "2.40")
+ '(package-selected-packages
+   (quote
+    (edit-indirect sunshine ggtags nodejs-repl web-beautify impatient-mode company-web web-mode simple-httpd company-tern tern js2-mode autodisass-java-bytecode llvm-mode common-lisp-snippets slime-company elisp-slime-nav company-c-headers flycheck ecb company-math company-auctex auctex-latexmk zenburn-theme use-package undo-tree smex projectile powerline paredit magit imenu-anywhere ido-vertical-mode ido-ubiquitous ido-at-point guide-key flx-ido expand-region engine-mode company-quickhelp color-theme-modern auto-compile auctex aggressive-indent))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
