@@ -330,7 +330,7 @@
 (use-package flycheck
   :commands (flycheck-add-mode)
   :config
-  (flycheck-add-mode 'html-tidy 'web-mode))
+  (flycheck-add-mode 'html-tidy 'html-mode))
 
 ;; C/C++
 (use-package company-c-headers
