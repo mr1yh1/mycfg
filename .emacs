@@ -375,7 +375,7 @@
           (clisp ("clisp"))
           (ecl ("ecl"))))
 
-  (setq common-lisp-hyperspec-root "/home/omer/Documents/HyperSpec/")
+  (setq common-lisp-hyperspec-root "~/Documents/HyperSpec/")
   :config
   (slime-setup '(slime-fancy slime-company)))
 
