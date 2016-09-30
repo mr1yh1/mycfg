@@ -219,9 +219,8 @@
   (global-company-mode 1))
 
 (use-package company-quickhelp
-  :demand t
-  :config
-  (company-quickhelp-mode 1))
+  :bind (:map company-active-map
+              ("M-h" . company-quickhelp-manual-begin)))
 
 (use-package imenu-anywhere
   :bind ("C-x C-." . ido-imenu-anywhere))
@@ -260,19 +259,17 @@
   (defengine github "https://github.com/search?ref=simplesearch&q=%s" :keybinding "h")
   (defengine amazon "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s" :keybinding "a"))
 
-;; ;; LATEX
-;;(use-package auctex)
-(require 'tex) ;; first install package auctex
+;; LATEX
+(use-package tex
+  :ensure auctex)
 (use-package auctex-latexmk)
 (use-package company-auctex)
-
 (use-package company-math
   :defer t
   :config
   (add-to-list 'company-backends '(company-math-symbols-latex company-latex-commands)))
 
 ;;;; PROGRAMMING
-
 ;; semantic
 (use-package semantic
   :commands (semantic-load-enable-excessive-code-helpers)
@@ -374,14 +371,16 @@
                 :program-args "--dynamic-space-size 1024")
           (clisp ("clisp"))
           (ecl ("ecl"))))
-
-  (setq common-lisp-hyperspec-root "~/Documents/HyperSpec/")
+  (setq common-lisp-hyperspec-root (expand-file-name "~/Documents/HyperSpec/"))
   :config
+  ;; semantic is not good in lisp-mode
+  (add-to-list 'semantic-inhibit-functions
+               (lambda () (derived-mode-p 'lisp-mode 'slime-repl-mode)))           
   (slime-setup '(slime-fancy slime-company)))
 
 ;; assembly
-(use-package llvm-mode)
-(use-package autodisass-java-bytecode)
+(use-package llvm-mode :disabled t)
+(use-package autodisass-java-bytecode :disabled t)
 ;;(use-package autodisass-llvm)
 
 ;; WEB
