@@ -1,21 +1,49 @@
 ;;;; package ---- Summary
 ;;;; Commentary:
 ;;;; Code:
+
+(setq load-prefer-newer t)
+
+;; visual basics
+(defvar my/font "DejaVu Sans Mono 16")
+(set-frame-font my/font)
+(add-to-list 'after-make-frame-functions
+             (lambda (frame)
+               (set-frame-parameter frame 'font my/font)))
+
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+(fset 'yes-or-no-p 'y-or-n-p)
+(column-number-mode 1)
+(show-paren-mode 1)
+
+(prefer-coding-system 'utf-8)
+(set-language-environment "UTF-8")
+(set-default-coding-systems 'utf-8)
+
+(setq show-trailing-whitespace t)
+(setq-default indent-tabs-mode nil)
+
+(require 'windmove)
+(windmove-default-keybindings)
+
+(require 'winner)
+(winner-mode 1)
+
+;;;
 (setq user-full-name "Omer YILMAZ"
       user-mail-address "mr1yh1@yahoo.com")
 
 (setq source-directory "/opt/emacs-25.1/")
+;;(byte-recompile-directory user-emacs-directory 0)
 
 (load "~/.emacs.d/_private" t)
 ;; load new CEDET before build-in CEDET is loaded.
 ;; git clone http://git.code.sf.net/p/cedet/git cedet
 (load-file (concat user-emacs-directory "git/cedet/cedet-devel-load.el"))
-(load-file (concat user-emacs-directory "git/cedet/contrib/cedet-contrib-load.el"))
-
-;; UTF-8
-(prefer-coding-system 'utf-8)
-(set-language-environment "UTF-8")
-(set-default-coding-systems 'utf-8)
+;;(load-file (concat user-emacs-directory "git/cedet/contrib/cedet-contrib-load.el"))
 
 ;; backups
 (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
@@ -33,32 +61,16 @@
 (setq savehist-additional-variables
       '(kill-ring
         search-ring
-        regexp-search-ring))
+        regexp-search-ring
+        register-alist))
 (savehist-mode 1)
-
-;; basics
-(set-frame-font "DejaVu Sans Mono 14")
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-(fset 'yes-or-no-p 'y-or-n-p)
-(column-number-mode 1)
-(show-paren-mode 1)
 
 (require 'recentf)
 (setq recentf-save-file "~/.emacs.d/.recentf_save_file")
 (recentf-mode 1)
 
-(require 'windmove)
-(windmove-default-keybindings)
-
-(require 'winner)
-(winner-mode 1)
-
-(setq show-trailing-whitespace t)
-(setq-default indent-tabs-mode nil)
-(setq load-prefer-newer t)
+;;(require 'desktop)
+;;(desktop-save-mode 1)
 
 (set-register ?e (cons 'file "~/.emacs"))
 
@@ -67,6 +79,7 @@
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region)
 (global-set-key (kbd "C-x w") 'browse-url)
 (global-set-key (kbd "M-/") 'hippie-expand)
+(global-set-key (kbd "C-x C-b") 'ibuffer)
 
 (setq hippie-expand-try-functions-list
       '(try-expand-all-abbrevs
@@ -107,10 +120,23 @@
 
 (use-package dash)
 
+;; color theme
+(use-package color-theme-modern)
+
+(use-package zenburn-theme
+  :config (load-theme 'zenburn t))
+
+(use-package powerline
+  :commands (powerline-set-selected-window)
+  :config
+  (powerline-default-theme))
+
+;; editing utils
 (use-package paredit
   :commands (enable-paredit-mode))
 
 (add-hook 'lisp-mode-hook 'enable-paredit-mode)
+(add-hook 'emacs-lisp-mode 'enable-paredit-mode)
 (add-hook 'clojure-mode-hook 'enable-paredit-mode)
 
 (use-package aggressive-indent
@@ -118,17 +144,36 @@
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode)
   (global-aggressive-indent-mode 1))
 
+(use-package popwin)
+(use-package pos-tip)
+
 (use-package guide-key
   :demand t
   :diminish guide-key-mode
   :config
   (setq guide-key/guide-key-sequence t)
+  (setq guide-key/idle-delay 2)
+  (setq guide-key/popup-window-position 'right)
+  (setq guide-key/text-scale-amount -2)
   (guide-key-mode 1))
+
+;; popwin won't work with ECB
+;; and if there is not enough space.
+(use-package guide-key-tip
+  :demand t
+  :config
+  (setq guide-key-tip/enabled nil))
 
 (use-package edit-indirect
   :bind (("C-c >" . edit-indirect-region)))
 
-(use-package winner)
+(use-package multiple-cursors
+  :bind
+  (("C-c m m" . mc/mark-all-like-this-dwim)
+   ("C-c m e" . mc/mark-more-like-this-extended)
+   ("C-c m l" . mc/edit-lines)
+   ("C-c m s" . mc/mark-sgml-tag-pair)
+   ("C-c m d" . mc/mark-all-like-this-in-defun)))
 
 (use-package undo-tree
   :demand t
@@ -137,17 +182,6 @@
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t)
   (global-undo-tree-mode))
-
-;; color theme
-(use-package color-theme-modern)
-
-(use-package zenburn-theme
-  :config (load-theme 'zenburn t))
-
-  (use-package powerline
-    :commands (powerline-set-selected-window)
-    :config
-    (powerline-default-theme))
 
 ;; ido
 (use-package ido
@@ -196,26 +230,22 @@
   :config
   (setq org-todo-keywords
         '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
-  (setq org-tags-alist
-        '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
-  (define-key global-map "\C-cl" 'org-store-link)
-  (define-key global-map "\C-ca" 'org-agenda)
+  (define-key global-map "\C-c l" 'org-store-link)
+  (define-key global-map "\C-c a" 'org-agenda)
   (setq org-log-done 'time)
   (setq org-agenda-files (list "~/org/agenda.org")))
 
 ;; COMPANY
 (use-package company
   :demand t
-  :init
-  ;;:diminish company-mode
   :bind (:map company-active-map
               ("C-s" . company-select-next)
               ("C-r" . company-select-previous)
               ("C-d" . company-show-doc-buffer)
               ("C-e" . company-other-backend))
-  :config
+  :init
   (define-key global-map (kbd "C-.") 'company-files)
-  (define-key global-map (kbd "C-M-.") 'company-complete)
+  (define-key global-map (kbd "C-M-.") 'company-complete-common)
   (global-company-mode 1))
 
 (use-package company-quickhelp
@@ -226,8 +256,7 @@
   :bind ("C-x C-." . ido-imenu-anywhere))
 
 (use-package yasnippet
-  ;;:diminish yas-minor-mode
-  :config
+  :init
   (setq yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
   (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
   (add-to-list 'company-backends 'company-yasnippet)
@@ -244,36 +273,32 @@
   (setq projectile-enable-caching t)
   (projectile-global-mode))
 
-;; search the web
-(use-package engine-mode
-  :commands (defengine engine/set-keymap-prefix engine-mode engine/get-query engine/execute-search)
-  ;;(setq engine/browser-function 'eww-browse-url)
-  :config
-  (engine-mode t)
-  (engine/set-keymap-prefix (kbd "C-c s"))
-  (defengine google
-    "http://www.google.com/search?ie=utf-8&oe=utf-8&q=%s" :keybinding "g")
-  (defengine stack-overflow "https://stackoverflow.com/search?q=%s" :keybinding "s")
-  (defengine youtube "http://www.youtube.com/results?aq=f&oq=&search_query=%s" :keybinding "y")
-  (defengine wikipedia "http://www.wikipedia.org/search-redirect.php?language=en&go=Go&search=%s" :keybinding "w")
-  (defengine github "https://github.com/search?ref=simplesearch&q=%s" :keybinding "h")
-  (defengine amazon "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s" :keybinding "a"))
-
-;; LATEX
+;; ;; LATEX
 (use-package tex
-  :ensure auctex)
-(use-package auctex-latexmk)
-(use-package company-auctex)
-(use-package company-math
-  :defer t
+  :ensure auctex
   :config
-  (add-to-list 'company-backends '(company-math-symbols-latex company-latex-commands)))
+  
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+  (TeX-global-PDF-mode 1)
+  (setq TeX-default-mode 'context-mode)
+  (require 'reftex)
+  (reftex-plug-into-AUCTeX))
+
+(add-hook 'TeX-mode-hook
+          (lambda ()
+            (TeX-fold-mode 1)
+            (reftex-mode 1)))
+
 
 ;;;; PROGRAMMING
+
 ;; semantic
 (use-package semantic
   :commands (semantic-load-enable-excessive-code-helpers)
   :config
+  ;; (add-to-list 'semantic-inhibit-functions (lambda () (derived-mode-p 'prog-mode)))
   (semantic-load-enable-excessive-code-helpers)
   (when (cedet-gnu-global-version-check t)
     (semanticdb-enable-gnu-global-databases 'c-mode)
@@ -288,7 +313,7 @@
   ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig.h"))
 
   ;; (global-srecode-minor-mode 1) ;; yas ?
-  
+
   )
 
 ;; ede
@@ -368,20 +393,20 @@
   (setq slime-lisp-implementations
         '((sbcl ("sbcl")
                 :coding-system utf-8-unix
-                :program-args "--dynamic-space-size 1024")
+                :program-args "--dynamic-space-size 2048")
           (clisp ("clisp"))
           (ecl ("ecl"))))
+
   (setq common-lisp-hyperspec-root (expand-file-name "~/Documents/HyperSpec/"))
   :config
-  ;; semantic is not good in lisp-mode
   (add-to-list 'semantic-inhibit-functions
-               (lambda () (derived-mode-p 'lisp-mode 'slime-repl-mode)))           
+               (lambda () (derived-mode-p 'lisp-mode 'slime-repl-mode)))
   (slime-setup '(slime-fancy slime-company)))
 
-;; assembly
-(use-package llvm-mode :disabled t)
-(use-package autodisass-java-bytecode :disabled t)
-;;(use-package autodisass-llvm)
+;; R OCTAVE JULIA ETC...
+(use-package ess
+  :defer t
+  :disabled t)
 
 ;; WEB
 (use-package js2-mode
@@ -469,7 +494,22 @@
   (rcirc-track-minor-mode 1)
   (flyspell-mode 1))
 
+;; search
+(use-package engine-mode
+  :commands (defengine engine/set-keymap-prefix engine-mode engine/get-query engine/execute-search)
+  ;;(setq engine/browser-function 'eww-browse-url)
+  :config
+  (engine-mode t)
+  (engine/set-keymap-prefix (kbd "C-c s"))
+  (defengine google
+    "http://www.google.com/search?ie=utf-8&oe=utf-8&q=%s" :keybinding "g")
+  (defengine stack-overflow "https://stackoverflow.com/search?q=%s" :keybinding "s")
+  (defengine youtube "http://www.youtube.com/results?aq=f&oq=&search_query=%s" :keybinding "y")
+  (defengine wikipedia "http://www.wikipedia.org/search-redirect.php?language=en&go=Go&search=%s" :keybinding "w")
+  (defengine github "https://github.com/search?ref=simplesearch&q=%s" :keybinding "h")
+  (defengine amazon "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s" :keybinding "a"))
 
+;; weather reports
 (use-package sunshine
   :commands (sunshine-forecast)
   :config
@@ -522,13 +562,6 @@
 ;;   :defer t
 ;;   :config (add-hook 'js-mode-hook (lambda () (tern-mode t))))
 
-
-;; ;; R OCTAVE JULIA ETC...
-;; (use-package ess
-;;   :defer t
-;;   ;;:disabled t
-;;   )
-
 ;; (use-package redshank
 ;;   :defer t
 ;;   :init
@@ -550,21 +583,3 @@
 ;;   (setq cider-repl-history-file "~/.emacs.d/.cider-repl-history")
 ;;   (add-hook 'cider-mode-hook 'eldoc-mode)
 ;;   (add-hook 'cider-repl-mode-hook 'subword-mode))
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(column-number-mode t)
- '(ecb-layout-name "left8" t)
- '(ecb-options-version "2.40")
- '(package-selected-packages
-   (quote
-    (edit-indirect sunshine ggtags nodejs-repl web-beautify impatient-mode company-web web-mode simple-httpd company-tern tern js2-mode autodisass-java-bytecode llvm-mode common-lisp-snippets slime-company elisp-slime-nav company-c-headers flycheck ecb company-math company-auctex auctex-latexmk zenburn-theme use-package undo-tree smex projectile powerline paredit magit imenu-anywhere ido-vertical-mode ido-ubiquitous ido-at-point guide-key flx-ido expand-region engine-mode company-quickhelp color-theme-modern auto-compile auctex aggressive-indent))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
