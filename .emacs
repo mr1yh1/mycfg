@@ -142,6 +142,7 @@
 (use-package aggressive-indent
   :config
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode)
+  (add-to-list 'aggressive-indent-excluded-modes 'slime-repl-mode)
   (global-aggressive-indent-mode 1))
 
 (use-package popwin)
@@ -277,7 +278,6 @@
 (use-package tex
   :ensure auctex
   :config
-  
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (setq-default TeX-master nil)
