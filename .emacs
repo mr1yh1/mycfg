@@ -1,4 +1,4 @@
-;;;; package ---- Summary
+;;;; .emacs ---- Emacs personal configuration file.
 ;;;; Commentary:
 ;;;; Code:
 
@@ -73,6 +73,7 @@
 ;;(desktop-save-mode 1)
 
 (set-register ?e (cons 'file "~/.emacs"))
+(set-register ?a (cons 'file "~/org/agenda.org"))
 
 ;; key bindings
 (global-set-key (kbd "<f9>") 'compile)
@@ -228,13 +229,25 @@
 
 ;;; ORG-MODE
 (use-package org
+  :init
+  (setq-default org-replace-disputed-keys 1)
   :config
   (setq org-todo-keywords
         '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
-  (define-key global-map "\C-c l" 'org-store-link)
-  (define-key global-map "\C-c a" 'org-agenda)
   (setq org-log-done 'time)
   (setq org-agenda-files (list "~/org/agenda.org")))
+
+(use-package org-bullets
+  :init
+  (setq-default org-bullets-bullet-list (list (propertize "☯" 'height 18)))
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+(use-package org-beautify-theme)
+
+(use-package stripe-buffer
+  :init
+  (add-hook 'dired-mode-hook 'stripe-listify-buffer)
+  (add-hook 'ibuffer-mode-hook 'stripe-listify-buffer))
 
 ;; COMPANY
 (use-package company
@@ -258,7 +271,7 @@
 
 (use-package yasnippet
   :init
-  (setq yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
+  (setq-default yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
   (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
   (add-to-list 'company-backends 'company-yasnippet)
   (yas-global-mode 1))
@@ -274,11 +287,12 @@
   (setq projectile-enable-caching t)
   (projectile-global-mode))
 
-;; ;; LATEX
+;; LATEX
 (use-package tex
+  :commands (TeX-global-PDF-mode reftex-plug-into-AUCTeX)
   :ensure auctex
   :config
-  (setq TeX-auto-save t)
+  (setq-default TeX-auto-save t)
   (setq TeX-parse-self t)
   (setq-default TeX-master nil)
   (TeX-global-PDF-mode 1)
@@ -296,9 +310,10 @@
 
 ;; semantic
 (use-package semantic
-  :commands (semantic-load-enable-excessive-code-helpers)
+  :commands (semantic-load-enable-excessive-code-helpers
+             cedet-gnu-global-version-check
+             semanticdb-enable-gnu-global-databases)
   :config
-  ;; (add-to-list 'semantic-inhibit-functions (lambda () (derived-mode-p 'prog-mode)))
   (semantic-load-enable-excessive-code-helpers)
   (when (cedet-gnu-global-version-check t)
     (semanticdb-enable-gnu-global-databases 'c-mode)
@@ -339,7 +354,7 @@
   (setq ecb-layout-name 'left3)
   (setq ecb-windows-height 0.20)
   (setq ecb-windows-width 0.20)
-  (setq ecb-examples-bufferinfo-buffer-name nil)
+  (defvar ecb-examples-bufferinfo-buffer-name nil "otherwise it complains.")
   (setq ecb-compile-window-height nil)
   ;;(setq ecb-display-news-for-upgrade nil)
   ;;(setq ecb-display-upgraded-options nil)
@@ -399,9 +414,9 @@
 
   (setq common-lisp-hyperspec-root (expand-file-name "~/Documents/HyperSpec/"))
   :config
+  (slime-setup '(slime-fancy slime-company))
   (add-to-list 'semantic-inhibit-functions
-               (lambda () (derived-mode-p 'lisp-mode 'slime-repl-mode)))
-  (slime-setup '(slime-fancy slime-company)))
+               (lambda () (derived-mode-p 'lisp-mode 'slime-repl-mode))))
 
 ;; R OCTAVE JULIA ETC...
 (use-package ess
@@ -441,8 +456,8 @@
 
 (use-package simple-httpd)
 
-;; C/C++
-(use-package ggtags
+;;; C/C++
+(use-package ggtags ;; semantics is better.
   :defer t
   :bind (("M-." . ggtags-find-tag-dwim))
   :config
@@ -583,3 +598,6 @@
 ;;   (setq cider-repl-history-file "~/.emacs.d/.cider-repl-history")
 ;;   (add-hook 'cider-mode-hook 'eldoc-mode)
 ;;   (add-hook 'cider-repl-mode-hook 'subword-mode))
+
+(setq custom-file "~/.emacs.d/.emacs-custom.el")
+(load custom-file)
