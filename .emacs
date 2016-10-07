@@ -134,6 +134,12 @@
   (powerline-default-theme))
 
 ;; editing utils
+(use-package hideshow
+  :commands (hs-minor-mode)
+  :init
+  (add-hook 'prog-mode-hook
+            (lambda () (hs-minor-mode 1))))
+
 (use-package paredit
   :commands (enable-paredit-mode))
 
@@ -452,12 +458,16 @@
   :defer t)
 
 (use-package markdown-mode
-  :ensure t
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
+
+(use-package lorem-ipsum
+  :commands (lorem-ipsum-insert-sentences
+             lorem-ipsum-insert-paragraphs
+             lorem-ipsum-insert-list))
 
 ;; ;;; C/C++
 ;; (use-package ggtags ;; semantics is better.
