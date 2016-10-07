@@ -271,6 +271,8 @@
          ("C-d" . company-show-doc-buffer)
          ("C-e" . company-other-backend))
   :config
+  (add-to-list 'company-backends 'company-ispell)
+  (setq company-idle-delay nil) ;; only manual
   (global-company-mode 1))
 
 (use-package company-quickhelp
