@@ -78,8 +78,9 @@
 ;; key bindings
 (global-set-key (kbd "<f9>") 'compile)
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region)
-(global-set-key (kbd "C-x w") 'browse-url)
-(global-set-key (kbd "M-/") 'hippie-expand)
+(global-set-key (kbd "C-/") 'hippie-expand)
+;; find file or dired at point
+(global-set-key (kbd "C-.") 'find-file-at-point)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
 (setq hippie-expand-try-functions-list
@@ -147,11 +148,10 @@
   (global-aggressive-indent-mode 1))
 
 (use-package popwin)
-(use-package pos-tip)
 
 (use-package guide-key
-  :demand t
   :diminish guide-key-mode
+  :commands (guide-key-mode)
   :config
   (setq guide-key/guide-key-sequence t)
   (setq guide-key/idle-delay 2)
@@ -161,10 +161,13 @@
 
 ;; popwin won't work with ECB
 ;; and if there is not enough space.
+(use-package pos-tip
+  :defer t)
 (use-package guide-key-tip
-  :demand t
-  :config
-  (setq guide-key-tip/enabled nil))
+  :commands (guide-key-tip/toggle-enable))
+
+(use-package expand-region
+  :bind (("C-=" . er/expand-region)))
 
 (use-package edit-indirect
   :bind (("C-c >" . edit-indirect-region)))
@@ -178,17 +181,22 @@
    ("C-c m d" . mc/mark-all-like-this-in-defun)))
 
 (use-package undo-tree
-  :demand t
+  :defer t
   :diminish undo-tree-mode
-  :config
+  :commands (undo-tree-visualize
+             undo-tree-undo
+             undo-tree-redo)
+  :bind (("C-x u" . undo-tree-visualize)
+         ("C-_" . undo-tree-undo)
+         ("M-_" . undo-tree-redo))
+  :init
   (setq undo-tree-visualizer-timestamps t)
-  (setq undo-tree-visualizer-diff t)
-  (global-undo-tree-mode))
+  (setq undo-tree-visualizer-diff nil))
 
 ;; ido
 (use-package ido
-  :commands (ido-everywhere ido-fallback-command ido-complete ido-select-text ido-exit-minibuffer)
   :demand t
+  :commands (ido-everywhere ido-fallback-command ido-complete ido-select-text ido-exit-minibuffer)
   :init
   (setq ido-use-faces t)
   (setq ido-file-extensions-order '(".lisp" ".org" ".el" ".emacs"))
@@ -198,6 +206,7 @@
   (ido-everywhere 1))
 
 (use-package ido-ubiquitous
+  :demand t
   :commands (ido-ubiquitous-should-use-old-style-default)
   :config
   (ido-ubiquitous-mode 1))
@@ -209,14 +218,14 @@
   (ido-vertical-mode 1))
 
 (use-package flx-ido
+  :demand t
   :init
+  (flx-ido-mode 1)
   (setq ido-enable-flex-matching t)
-  :config
-  (flx-ido-mode 1))
+  (setq ido-use-faces nil))
 
 (use-package ido-at-point
   :demand t
-  :commands (ido-at-point-mode)
   :config
   (ido-at-point-mode))
 
@@ -228,21 +237,19 @@
    ("C-c C-c M-x" . execute-extended-command)))
 
 ;;; ORG-MODE
+(use-package org-bullets
+  :commands (org-bullets-mode))
+
 (use-package org
+  :mode ("\\.org" . org-mode)
   :init
   (setq-default org-replace-disputed-keys 1)
-  :config
   (setq org-todo-keywords
         '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
   (setq org-log-done 'time)
-  (setq org-agenda-files (list "~/org/agenda.org")))
-
-(use-package org-bullets
-  :init
-  (setq-default org-bullets-bullet-list (list (propertize "☯" 'height 18)))
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-
-(use-package org-beautify-theme)
+  (setq org-agenda-files (list "~/org/agenda.org"))
+  :config
+  (org-bullets-mode 1))
 
 (use-package stripe-buffer
   :init
@@ -251,15 +258,13 @@
 
 ;; COMPANY
 (use-package company
-  :demand t
-  :bind (:map company-active-map
-              ("C-s" . company-select-next)
-              ("C-r" . company-select-previous)
-              ("C-d" . company-show-doc-buffer)
-              ("C-e" . company-other-backend))
-  :init
-  (define-key global-map (kbd "C-.") 'company-files)
-  (define-key global-map (kbd "C-M-.") 'company-complete-common)
+  :bind (("C-M-." . company-manual-begin)
+         :map company-active-map
+         ("C-s" . company-select-next)
+         ("C-r" . company-select-previous)
+         ("C-d" . company-show-doc-buffer)
+         ("C-e" . company-other-backend))
+  :config
   (global-company-mode 1))
 
 (use-package company-quickhelp
@@ -270,7 +275,10 @@
   :bind ("C-x C-." . ido-imenu-anywhere))
 
 (use-package yasnippet
-  :init
+  :defer t
+  :bind (:map yas-minor-mode-map
+              ("C-c & C-s" . yas-insert-snippet))
+  :config
   (setq-default yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
   (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
   (add-to-list 'company-backends 'company-yasnippet)
@@ -278,6 +286,7 @@
 
 ;; projects
 (use-package magit
+  :defer t
   :bind ("C-x g" . magit-status))
 
 (use-package projectile
@@ -285,10 +294,11 @@
   :diminish projectile-mode
   :config
   (setq projectile-enable-caching t)
-  (projectile-global-mode))
+  (projectile-mode 1))
 
 ;; LATEX
 (use-package tex
+  :defer t
   :commands (TeX-global-PDF-mode reftex-plug-into-AUCTeX)
   :ensure auctex
   :config
@@ -308,10 +318,19 @@
 
 ;;;; PROGRAMMING
 
+(use-package flycheck
+  :commands (flycheck-add-mode)
+  :config
+  (flycheck-add-mode 'html-tidy 'html-mode))
+
 ;; semantic
 (use-package semantic
+  :init
+  ;; do not disturb minibuffer.
+  (setq semantic-working-type 'dynamic)
   :commands (semantic-load-enable-excessive-code-helpers
              cedet-gnu-global-version-check
+             global-semantic-idle-completions-mode
              semanticdb-enable-gnu-global-databases)
   :config
   (semantic-load-enable-excessive-code-helpers)
@@ -319,33 +338,13 @@
     (semanticdb-enable-gnu-global-databases 'c-mode)
     (semanticdb-enable-gnu-global-databases 'c++-mode))
   (global-set-key (kbd "C-c C-f")  'senator-fold-tag-toggle)
-
+  (global-semantic-idle-completions-mode -1)
   ;; adding includes
   ;; (semantic-add-system-include "/usr/include/" 'c-mode)
-  ;; (setq qt4-base-dir "/usr/include/qt4")
-  ;; (semantic-add-system-include qt4-base-dir 'c++-mode)
   ;; (add-to-list 'auto-mode-alist (cons qt4-base-dir 'c++-mode))
   ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig.h"))
-
   ;; (global-srecode-minor-mode 1) ;; yas ?
-
   )
-
-;; ede
-(use-package ede
-  :config
-  ;; (ede-cpp-root-project "Test"
-  ;;                       :name "Test Project"
-  ;;                       :file "~/work/project/CMakeLists.txt"
-  ;;                       :include-path '("/"
-  ;;                                       "/Common"
-  ;;                                       "/Interfaces"
-  ;;                                       "/Libs"
-  ;;                                       )
-  ;;                       :system-include-path '("~/exp/include")
-  ;;                       :spp-table '(("isUnix" . "")
-  ;;                                    ("BOOST_TEST_DYN_LINK" . "")))
-  (global-ede-mode 1))
 
 ;; emacs code browser
 (use-package ecb
@@ -360,14 +359,6 @@
   ;;(setq ecb-display-upgraded-options nil)
   :mode (("C-c. lw" . ecb-toggle-ecb-windows))
   )
-
-;;
-(use-package projectile)
-
-(use-package flycheck
-  :commands (flycheck-add-mode)
-  :config
-  (flycheck-add-mode 'html-tidy 'html-mode))
 
 ;; C/C++
 (use-package company-c-headers
@@ -393,7 +384,7 @@
 (use-package elisp-slime-nav
   :diminish elisp-slime-nav-mode
   :init
-  (dolist (i '(emacs-lisp-mode-hook ielm-mode-hook))
+  (dolist (i '(emacs-lisp-mode-hook ielm-mode-hook help-mode-hook))
     (add-hook i 'elisp-slime-nav-mode)))
 
 ;; COMMON LISP
@@ -443,43 +434,57 @@
   :config
   (add-hook 'js-mode-hook (lambda () (tern-mode t))))
 
+(use-package nodejs-repl
+  :defer t)
+
 (use-package company-tern
-  :config
-  (eval-after-load 'company
-    '(add-to-list 'company-backends 'company-tern)))
-
-(use-package nodejs-repl)
-;; file from https://gist.github.com/emallson/0eae865bc99fc9639fac
-(load-file (concat user-emacs-directory "git/nodejs-repl-eval.el"))
-(define-key js2-mode-map (kbd "C-c C-e") 'nodejs-repl-eval-dwim)
-(define-key js2-mode-map (kbd "C-c C-b") 'nodejs-repl-eval-buffer)
-
-(use-package simple-httpd)
-
-;;; C/C++
-(use-package ggtags ;; semantics is better.
   :defer t
-  :bind (("M-." . ggtags-find-tag-dwim))
   :config
-  (add-hook 'c-mode-common-hook
+  (add-hook 'js-mode-hook
             (lambda ()
-              (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-                (setq-local imenu-create-index-function
-                            #'ggtags-build-imenu-index)
-                (ggtags-mode 1)))))
+              ;; file from https://gist.github.com/emallson/0eae865bc99fc9639fac
+              (load-file (concat user-emacs-directory "git/nodejs-repl-eval.el"))
+              (define-key js2-mode-map (kbd "C-c C-e") 'nodejs-repl-eval-dwim)
+              (define-key js2-mode-map (kbd "C-c C-b") 'nodejs-repl-eval-buffer)
+              (add-to-list 'company-backends 'company-tern))))
+
+(use-package simple-httpd
+  :defer t)
+
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
+
+;; ;;; C/C++
+;; (use-package ggtags ;; semantics is better.
+;;   :defer t
+;;   :bind (("M-." . ggtags-find-tag-dwim))
+;;   :config
+;;   (add-hook 'c-mode-common-hook
+;;             (lambda ()
+;;               (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+;;                 (setq-local imenu-create-index-function
+;;                             #'ggtags-build-imenu-index)
+;;                 (ggtags-mode 1)))))
 
 ;; C styles: gnu, linux, bsd, java etc..
-(require 'cc-mode)
+(use-package cc-mode
+  :defer t)
+
 (add-hook 'c-mode-hook
           (lambda ()
             (setq c-default-style "gnu")
             (hs-minor-mode)))
 
 (use-package gdb-mi
+  :defer t
   :config
   (setq gdb-many-windows t
         gdb-show-main t))
-
 
 ;;; STARTUP
 (add-hook 'after-init-hook
@@ -516,13 +521,26 @@
   :config
   (engine-mode t)
   (engine/set-keymap-prefix (kbd "C-c s"))
+  (defengine word
+    "http://wordnik.com/words/%s"
+    :term-transformation-hook downcase
+    :keybinding "d")
   (defengine google
     "http://www.google.com/search?ie=utf-8&oe=utf-8&q=%s" :keybinding "g")
   (defengine stack-overflow "https://stackoverflow.com/search?q=%s" :keybinding "s")
+  (defengine github-el
+    "https://github.com/search?type=Code&q=extension:el+%s"
+    :keybinding "e"
+    :browser 'browse-url-firefox
+    :docstring "Search .el files on github.com.")
   (defengine youtube "http://www.youtube.com/results?aq=f&oq=&search_query=%s" :keybinding "y")
   (defengine wikipedia "http://www.wikipedia.org/search-redirect.php?language=en&go=Go&search=%s" :keybinding "w")
-  (defengine github "https://github.com/search?ref=simplesearch&q=%s" :keybinding "h")
-  (defengine amazon "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s" :keybinding "a"))
+  (defengine emacs-devel
+    "https://lists.gnu.org/archive/cgi-bin/namazu.cgi?query=%s&submit=Search&idxname=emacs-devel"
+    :keybinding "z"
+    :browser 'browse-url-firefox
+    :docstring "Search posts on emacs-devel archive.")
+  (defengine github "https://github.com/search?ref=simplesearch&q=%s" :keybinding "h"))
 
 ;; weather reports
 (use-package sunshine
@@ -572,11 +590,6 @@
 ;;         smtpmail-stream-type  'ssl
 ;;         smtpmail-smtp-service 465))
 
-
-;; (use-package tern
-;;   :defer t
-;;   :config (add-hook 'js-mode-hook (lambda () (tern-mode t))))
-
 ;; (use-package redshank
 ;;   :defer t
 ;;   :init
@@ -601,3 +614,22 @@
 
 (setq custom-file "~/.emacs.d/.emacs-custom.el")
 (load custom-file)
+
+;; This buffer is for text that is not saved, and for Lisp evaluation.
+;; To create a file, visit it with C-x C-f and enter text in its buffer.
+
+;; ;; ede
+;; (use-package ede
+;;   :config
+;;   ;; (ede-cpp-root-project "Test"
+;;   ;;                       :name "Test Project"
+;;   ;;                       :file "~/work/project/CMakeLists.txt"
+;;   ;;                       :include-path '("/"
+;;   ;;                                       "/Common"
+;;   ;;                                       "/Interfaces"
+;;   ;;                                       "/Libs"
+;;   ;;                                       )
+;;   ;;                       :system-include-path '("~/exp/include")
+;;   ;;                       :spp-table '(("isUnix" . "")
+;;   ;;                                    ("BOOST_TEST_DYN_LINK" . "")))
+;;   (global-ede-mode 1))
