@@ -145,7 +145,6 @@
 
 (add-hook 'lisp-mode-hook 'enable-paredit-mode)
 (add-hook 'emacs-lisp-mode 'enable-paredit-mode)
-(add-hook 'clojure-mode-hook 'enable-paredit-mode)
 
 (use-package aggressive-indent
   :config
@@ -162,8 +161,7 @@
   (setq guide-key/guide-key-sequence t)
   (setq guide-key/idle-delay 2)
   (setq guide-key/popup-window-position 'right)
-  (setq guide-key/text-scale-amount -2)
-  (guide-key-mode 1))
+  (setq guide-key/text-scale-amount -2))
 
 ;; popwin won't work with ECB
 ;; and if there is not enough space.
@@ -187,7 +185,6 @@
    ("C-c m d" . mc/mark-all-like-this-in-defun)))
 
 (use-package undo-tree
-  :defer t
   :diminish undo-tree-mode
   :commands (undo-tree-visualize
              undo-tree-undo
@@ -224,14 +221,12 @@
   (ido-vertical-mode 1))
 
 (use-package flx-ido
-  :demand t
   :init
   (flx-ido-mode 1)
   (setq ido-enable-flex-matching t)
   (setq ido-use-faces nil))
 
 (use-package ido-at-point
-  :demand t
   :config
   (ido-at-point-mode))
 
@@ -247,7 +242,7 @@
   :commands (org-bullets-mode))
 
 (use-package org
-  :mode ("\\.org" . org-mode)
+  :mode ("\\.org$" . org-mode)
   :init
   (setq-default org-replace-disputed-keys 1)
   (setq org-todo-keywords
@@ -255,6 +250,7 @@
   (setq org-log-done 'time)
   (setq org-agenda-files (list "~/org/agenda.org"))
   :config
+  (add-to-list 'company-backends 'company-ispell)
   (org-bullets-mode 1))
 
 (use-package stripe-buffer
@@ -271,7 +267,10 @@
          ("C-d" . company-show-doc-buffer)
          ("C-e" . company-other-backend))
   :config
-  (add-to-list 'company-backends 'company-ispell)
+  ;; (setq company-transformers
+  ;;       '(company-sort-by-backend-importance)
+  ;;       company-occurrence-weight-function
+  ;;       #'company-occurrence-prefer-any-closest)
   (setq company-idle-delay nil) ;; only manual
   (global-company-mode 1))
 
@@ -287,10 +286,7 @@
   :bind (:map yas-minor-mode-map
               ("C-c & C-s" . yas-insert-snippet))
   :config
-  (setq-default yas-prompt-functions '(yas-ido-prompt yas-x-prompt  yas-dropdown-prompt))
-  (add-to-list 'hippie-expand-try-functions-list 'yas-hippie-try-expand)
-  (add-to-list 'company-backends 'company-yasnippet)
-  (yas-global-mode 1))
+  (setq-default yas-prompt-functions '(yas-ido-prompt)))
 
 ;; projects
 (use-package magit
@@ -298,31 +294,25 @@
   :bind ("C-x g" . magit-status))
 
 (use-package projectile
-  :defer t
-  :diminish projectile-mode
+  :commands (projectile-mode)
   :config
-  (setq projectile-enable-caching t)
-  (projectile-mode 1))
+  (setq projectile-enable-caching t))
 
 ;; LATEX
 (use-package tex
-  :defer t
+  :mode ("\\.tex$" . latex-mode)
   :commands (TeX-global-PDF-mode reftex-plug-into-AUCTeX)
   :ensure auctex
+  :init
+  (setq-default TeX-auto-save t
+                TeX-parse-self t
+                TeX-master nil
+                TeX-global-PDF-mode 1
+                TeX-default-mode 'context-mode)
   :config
-  (setq-default TeX-auto-save t)
-  (setq TeX-parse-self t)
-  (setq-default TeX-master nil)
-  (TeX-global-PDF-mode 1)
-  (setq TeX-default-mode 'context-mode)
-  (require 'reftex)
+  (TeX-fold-mode 1)
+  (reftex-mode 1)
   (reftex-plug-into-AUCTeX))
-
-(add-hook 'TeX-mode-hook
-          (lambda ()
-            (TeX-fold-mode 1)
-            (reftex-mode 1)))
-
 
 ;;;; PROGRAMMING
 
@@ -345,7 +335,6 @@
   (when (cedet-gnu-global-version-check t)
     (semanticdb-enable-gnu-global-databases 'c-mode)
     (semanticdb-enable-gnu-global-databases 'c++-mode))
-  (global-set-key (kbd "C-c C-f")  'senator-fold-tag-toggle)
   (global-semantic-idle-completions-mode -1)
   ;; adding includes
   ;; (semantic-add-system-include "/usr/include/" 'c-mode)
@@ -356,6 +345,7 @@
 
 ;; emacs code browser
 (use-package ecb
+  :commands (ecb-activate ecb-deactivate)
   :init
   (setq ecb-new-ecb-frame nil)
   (setq ecb-layout-name 'left3)
@@ -365,7 +355,6 @@
   (setq ecb-compile-window-height nil)
   ;;(setq ecb-display-news-for-upgrade nil)
   ;;(setq ecb-display-upgraded-options nil)
-  :mode (("C-c. lw" . ecb-toggle-ecb-windows))
   )
 
 ;; C/C++
@@ -389,6 +378,9 @@
 
 ;; ELISP
 ;; elp profiler, ielm repl, edebug debugger, reshank for refactoring.
+(add-hook 'emacs-lisp-mode 'eldoc-mode)
+(add-hook 'ielm-mode-hook 'eldoc-mode)
+
 (use-package elisp-slime-nav
   :diminish elisp-slime-nav-mode
   :init
@@ -396,9 +388,6 @@
     (add-hook i 'elisp-slime-nav-mode)))
 
 ;; COMMON LISP
-(use-package slime-company :defer t)
-(use-package common-lisp-snippets :defer t)
-
 (use-package slime
   :commands (slime)
   :defer t
@@ -413,7 +402,7 @@
 
   (setq common-lisp-hyperspec-root (expand-file-name "~/Documents/HyperSpec/"))
   :config
-  (slime-setup '(slime-fancy slime-company))
+  (slime-setup '(slime-fancy))
   (add-to-list 'semantic-inhibit-functions
                (lambda () (derived-mode-p 'lisp-mode 'slime-repl-mode))))
 
@@ -443,18 +432,7 @@
   (add-hook 'js-mode-hook (lambda () (tern-mode t))))
 
 (use-package nodejs-repl
-  :defer t)
-
-(use-package company-tern
-  :defer t
-  :config
-  (add-hook 'js-mode-hook
-            (lambda ()
-              ;; file from https://gist.github.com/emallson/0eae865bc99fc9639fac
-              (load-file (concat user-emacs-directory "git/nodejs-repl-eval.el"))
-              (define-key js2-mode-map (kbd "C-c C-e") 'nodejs-repl-eval-dwim)
-              (define-key js2-mode-map (kbd "C-c C-b") 'nodejs-repl-eval-buffer)
-              (add-to-list 'company-backends 'company-tern))))
+  :commands (nodejs-repl))
 
 (use-package simple-httpd
   :defer t)
@@ -484,19 +462,12 @@
 ;;                 (ggtags-mode 1)))))
 
 ;; C styles: gnu, linux, bsd, java etc..
-(use-package cc-mode
-  :defer t)
-
+(require 'gdb-mi)
 (add-hook 'c-mode-hook
           (lambda ()
-            (setq c-default-style "gnu")
-            (hs-minor-mode)))
-
-(use-package gdb-mi
-  :defer t
-  :config
-  (setq gdb-many-windows t
-        gdb-show-main t))
+            (setq-default gdb-many-windows t
+                          gdb-show-main t)
+            (setq c-default-style "gnu")))
 
 ;;; STARTUP
 (add-hook 'after-init-hook
@@ -518,7 +489,7 @@
         rcirc-default-full-name "Omer"
         rcirc-server-alist '(("irc.freenode.net"
                               :nick "mr1yh1"
-                              :channels ("#clojure" "#emacs")))
+                              :channels ("#emacs")))
         rcirc-omit-responses '("JOIN" "PART" "QUIT" "NICK" "AWAY")
         ;; auth values in .private
         rcirc-debug-flag t)
@@ -567,14 +538,10 @@
 (provide '.emacs)
 ;;; .emacs ends here
 
-;; (Defun ede-object-system-include-path ()
-;;   "Return the system include path for the current buffer."
-;;   (when ede-object
-;;     (ede-system-include-path ede-object)))
+(setq custom-file "~/.emacs.d/.emacs-custom.el")
+(load custom-file)
 
-;; (ede-project-directories
-;;    (quote
-;;     ("/home/omer/tmp/deneme/include" "/home/omer/tmp/deneme/src" "/home/omer/tmp/deneme")))
+(put 'downcase-region 'disabled nil)
 
 ;; GNUS
 ;; (use-package gnus
@@ -601,47 +568,3 @@
 ;;         smtpmail-smtp-server  "smtp.mail.yahoo.com"
 ;;         smtpmail-stream-type  'ssl
 ;;         smtpmail-smtp-service 465))
-
-;; (use-package redshank
-;;   :defer t
-;;   :init
-;;   (require 'slime)
-;;   ;;(setq redshank-install-lisp-support nil)
-;;   :config
-;;   (require 'redshank-loader)
-;;   (redshank-setup '(lisp-mode-hook slime-repl-mode-hook) t))
-
-;; ;; CLOJURE
-;; (use-package cider
-;;   :commands (cider-jack-in cider-jack-in-clojurescript)
-;;   :init
-;;   (add-hook 'clojure-mode-hook 'cider-mode)
-;;   (setq nrepl-hide-special-buffers t)
-;;   (setq cider-show-error-buffer nil)
-;;   (setq cider-repl-pop-to-buffer-on-connect nil)
-;;   (setq cider-repl-wrap-history t)
-;;   (setq cider-repl-history-file "~/.emacs.d/.cider-repl-history")
-;;   (add-hook 'cider-mode-hook 'eldoc-mode)
-;;   (add-hook 'cider-repl-mode-hook 'subword-mode))
-
-(setq custom-file "~/.emacs.d/.emacs-custom.el")
-(load custom-file)
-
-;; This buffer is for text that is not saved, and for Lisp evaluation.
-;; To create a file, visit it with C-x C-f and enter text in its buffer.
-
-;; ;; ede
-;; (use-package ede
-;;   :config
-;;   ;; (ede-cpp-root-project "Test"
-;;   ;;                       :name "Test Project"
-;;   ;;                       :file "~/work/project/CMakeLists.txt"
-;;   ;;                       :include-path '("/"
-;;   ;;                                       "/Common"
-;;   ;;                                       "/Interfaces"
-;;   ;;                                       "/Libs"
-;;   ;;                                       )
-;;   ;;                       :system-include-path '("~/exp/include")
-;;   ;;                       :spp-table '(("isUnix" . "")
-;;   ;;                                    ("BOOST_TEST_DYN_LINK" . "")))
-;;   (global-ede-mode 1))
