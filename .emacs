@@ -2,57 +2,51 @@
 ;;;; Commentary:
 ;;;; Code:
 
-(setq load-prefer-newer t)
+(package-initialize)
 
-;; visual basics
-(defvar my/font "DejaVu Sans Mono 16")
-(set-frame-font my/font)
-(add-to-list 'after-make-frame-functions
-             (lambda (frame)
-               (set-frame-parameter frame 'font my/font)))
-
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-(fset 'yes-or-no-p 'y-or-n-p)
-(column-number-mode 1)
-(show-paren-mode 1)
+;; BASICS
+(setq user-full-name "Omer YILMAZ"
+      user-mail-address "mr1yh1@yahoo.com")
 
 (prefer-coding-system 'utf-8)
 (set-language-environment "UTF-8")
 (set-default-coding-systems 'utf-8)
+(fset 'yes-or-no-p 'y-or-n-p)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+(column-number-mode 1)
+(show-paren-mode 1)
+(display-time-mode)
 
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t)
+(setq load-prefer-newer t)
+(setq scroll-step 1)
+(setq sentence-end-double-space nil)
 (setq show-trailing-whitespace t)
 (setq-default indent-tabs-mode nil)
 
+(defvar my-font "DejaVu Sans Mono 16")
+(set-frame-font my-font)
+(add-to-list 'after-make-frame-functions
+             (lambda (frame)
+               (set-frame-parameter frame 'font my-font)))
+
+;; WINDOWS
 (require 'windmove)
 (windmove-default-keybindings)
 
 (require 'winner)
 (winner-mode 1)
 
-;;;
-(setq user-full-name "Omer YILMAZ"
-      user-mail-address "mr1yh1@yahoo.com")
-
-(setq source-directory "/opt/emacs-25.1/")
-;;(byte-recompile-directory user-emacs-directory 0)
-
-(load "~/.emacs.d/_private" t)
-;; load new CEDET before build-in CEDET is loaded.
-;; git clone http://git.code.sf.net/p/cedet/git cedet
-(load-file (concat user-emacs-directory "git/cedet/cedet-devel-load.el"))
-;;(load-file (concat user-emacs-directory "git/cedet/contrib/cedet-contrib-load.el"))
-
-;; backups
+;; BACKUPS
 (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
 (setq delete-old-versions -1)
 (setq version-control t)
 (setq vc-make-backup-files t)
 (setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)))
 
-;; history
+;; HISTORY
 (setq history-length t)
 (setq history-delete-duplicates t)
 (require 'savehist)
@@ -69,17 +63,15 @@
 (setq recentf-save-file "~/.emacs.d/.recentf_save_file")
 (recentf-mode 1)
 
-;;(require 'desktop)
-;;(desktop-save-mode 1)
-
+;; REGISTERS
 (set-register ?e (cons 'file "~/.emacs"))
-(set-register ?a (cons 'file "~/org/agenda.org"))
+(set-register ?i (cons 'file "~/Documents/org/PROJECT_IDEAS.org"))
+(set-register ?a (cons 'file "~/Documents/org/agenda.org"))
 
-;; key bindings
+;; KEY BINDINGS
 (global-set-key (kbd "<f9>") 'compile)
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region)
 (global-set-key (kbd "C-/") 'hippie-expand)
-;; find file or dired at point
 (global-set-key (kbd "C-.") 'find-file-at-point)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
@@ -95,10 +87,7 @@
         try-complete-lisp-symbol-partially
         try-complete-lisp-symbol))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; packages
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; PACKAGE BASICS
 (require 'package)
 (setq package-enable-at-startup nil)
 (setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
@@ -107,13 +96,11 @@
 (setq package-enable-at-startup nil)
 (package-initialize)
 
-;; use-package
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
-  (package-install 'use-package))
+  (package-install 'irony))
 
 (require 'use-package)
-(require 'diminish)
 (setq use-package-verbose t)
 (setq use-package-always-ensure t)
 
@@ -121,69 +108,36 @@
   :config (auto-compile-on-load-mode))
 
 (use-package dash)
+(use-package diminish)
 
-;; color theme
+;; COLOR THEME
 (use-package color-theme-modern)
-
 (use-package zenburn-theme
   :config (load-theme 'zenburn t))
-
 (use-package powerline
   :commands (powerline-set-selected-window)
   :config
   (powerline-default-theme))
 
-;; editing utils
-(use-package hideshow
-  :commands (hs-minor-mode)
-  :init
-  (add-hook 'prog-mode-hook
-            (lambda () (hs-minor-mode 1))))
+(use-package stripe-buffer
+  :hook ((dired-mode-hook stripe-listify-buffer)
+         (ibuffer-mode-hook stripe-listify-buffer)))
 
-(use-package paredit
-  :commands (enable-paredit-mode))
-
-(add-hook 'lisp-mode-hook 'enable-paredit-mode)
-(add-hook 'emacs-lisp-mode 'enable-paredit-mode)
-
-(use-package aggressive-indent
-  :config
-  (add-to-list 'aggressive-indent-excluded-modes 'html-mode)
-  (add-to-list 'aggressive-indent-excluded-modes 'slime-repl-mode)
-  (global-aggressive-indent-mode 1))
-
+;; HELPERS
 (use-package popwin)
-
 (use-package guide-key
+  :defer nil
   :diminish guide-key-mode
   :commands (guide-key-mode)
   :config
   (setq guide-key/guide-key-sequence t)
   (setq guide-key/idle-delay 2)
   (setq guide-key/popup-window-position 'right)
-  (setq guide-key/text-scale-amount -2))
+  (setq guide-key/text-scale-amount -2)
+  (guide-key-mode))
 
-;; popwin won't work with ECB
-;; and if there is not enough space.
-(use-package pos-tip
-  :defer t)
-(use-package guide-key-tip
-  :commands (guide-key-tip/toggle-enable))
-
-(use-package expand-region
-  :bind (("C-=" . er/expand-region)))
-
-(use-package edit-indirect
-  :bind (("C-c >" . edit-indirect-region)))
-
-(use-package multiple-cursors
-  :bind
-  (("C-c m m" . mc/mark-all-like-this-dwim)
-   ("C-c m e" . mc/mark-more-like-this-extended)
-   ("C-c m l" . mc/edit-lines)
-   ("C-c m s" . mc/mark-sgml-tag-pair)
-   ("C-c m d" . mc/mark-all-like-this-in-defun)))
-
+;; EDITING
+;; editing utils
 (use-package undo-tree
   :diminish undo-tree-mode
   :commands (undo-tree-visualize
@@ -194,9 +148,44 @@
          ("M-_" . undo-tree-redo))
   :init
   (setq undo-tree-visualizer-timestamps t)
-  (setq undo-tree-visualizer-diff nil))
+  (setq undo-tree-visualizer-diff nil)
+  :config
+  (global-undo-tree-mode))
 
-;; ido
+(use-package expand-region
+  :bind (("C-=" . er/expand-region)))
+
+(use-package hideshow
+  :diminish t
+  :commands (hs-minor-mode)
+  :bind (("C-c @ C-c" . hs-toggle-hiding)))
+(add-hook 'prog-mode-hook (lambda () (hs-minor-mode 1)))
+
+(use-package edit-indirect
+  :bind (("C-c >" . edit-indirect-region)))
+
+(use-package aggressive-indent
+  :config
+  (add-to-list 'aggressive-indent-excluded-modes 'html-mode)
+  (add-to-list 'aggressive-indent-excluded-modes 'slime-repl-mode)
+  (global-aggressive-indent-mode 1))
+(add-hook 'asm-mode-hook
+          (lambda ()
+            (aggressive-indent-mode -1)))
+
+(use-package paredit
+  :commands (enable-paredit-mode)
+  :hook ((prog-mode-mode paredit-mode)))
+
+(use-package multiple-cursors
+  :bind
+  (("C-c m m" . mc/mark-all-like-this-dwim)
+   ("C-c m e" . mc/mark-more-like-this-extended)
+   ("C-c m l" . mc/edit-lines)
+   ("C-c m s" . mc/mark-sgml-tag-pair)
+   ("C-c m d" . mc/mark-all-like-this-in-defun)))
+
+;;; IDO settings
 (use-package ido
   :demand t
   :commands (ido-everywhere ido-fallback-command ido-complete ido-select-text ido-exit-minibuffer)
@@ -208,11 +197,7 @@
   (ido-mode 1)
   (ido-everywhere 1))
 
-(use-package ido-ubiquitous
-  :demand t
-  :commands (ido-ubiquitous-should-use-old-style-default)
-  :config
-  (ido-ubiquitous-mode 1))
+(use-package ido-completing-read+)
 
 (use-package ido-vertical-mode
   :config
@@ -237,267 +222,15 @@
    ;; This is your old M-x.
    ("C-c C-c M-x" . execute-extended-command)))
 
-;;; ORG-MODE
-(use-package org-bullets
-  :commands (org-bullets-mode))
-
-(use-package org
-  :mode ("\\.org$" . org-mode)
-  :init
-  (setq-default org-replace-disputed-keys 1)
-  (setq org-todo-keywords
-        '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
-  (setq org-log-done 'time)
-  (setq org-agenda-files (list "~/org/agenda.org"))
-  :config
-  (add-to-list 'company-backends 'company-ispell)
-  (org-bullets-mode 1))
-
-(use-package stripe-buffer
-  :init
-  (add-hook 'dired-mode-hook 'stripe-listify-buffer)
-  (add-hook 'ibuffer-mode-hook 'stripe-listify-buffer))
-
-;; COMPANY
-(use-package company
-  :bind (("C-M-." . company-manual-begin)
-         :map company-active-map
-         ("C-s" . company-select-next)
-         ("C-r" . company-select-previous)
-         ("C-d" . company-show-doc-buffer)
-         ("C-e" . company-other-backend))
-  :config
-  ;; (setq company-transformers
-  ;;       '(company-sort-by-backend-importance)
-  ;;       company-occurrence-weight-function
-  ;;       #'company-occurrence-prefer-any-closest)
-  (setq company-idle-delay nil) ;; only manual
-  (global-company-mode 1))
-
-(use-package company-quickhelp
-  :bind (:map company-active-map
-              ("M-h" . company-quickhelp-manual-begin)))
-
 (use-package imenu-anywhere
   :bind ("C-x C-." . ido-imenu-anywhere))
 
-(use-package yasnippet
-  :defer t
-  :bind (:map yas-minor-mode-map
-              ("C-c & C-s" . yas-insert-snippet))
+(use-package ido-completing-read+
+  :commands (ido-ubiquitous-mode)
   :config
-  (setq-default yas-prompt-functions '(yas-ido-prompt)))
+  (ido-ubiquitous-mode 1))
 
-;; projects
-(use-package magit
-  :defer t
-  :bind ("C-x g" . magit-status))
-
-(use-package projectile
-  :commands (projectile-mode)
-  :config
-  (setq projectile-enable-caching t))
-
-;; LATEX
-(use-package tex
-  :mode ("\\.tex$" . latex-mode)
-  :commands (TeX-global-PDF-mode reftex-plug-into-AUCTeX)
-  :ensure auctex
-  :init
-  (setq-default TeX-auto-save t
-                TeX-parse-self t
-                TeX-master nil
-                TeX-global-PDF-mode 1
-                TeX-default-mode 'context-mode)
-  :config
-  (TeX-fold-mode 1)
-  (reftex-mode 1)
-  (reftex-plug-into-AUCTeX))
-
-;;;; PROGRAMMING
-
-(use-package flycheck
-  :commands (flycheck-add-mode)
-  :config
-  (flycheck-add-mode 'html-tidy 'html-mode))
-
-;; semantic
-(use-package semantic
-  :init
-  ;; do not disturb minibuffer.
-  (setq semantic-working-type 'dynamic)
-  :commands (semantic-load-enable-excessive-code-helpers
-             cedet-gnu-global-version-check
-             global-semantic-idle-completions-mode
-             semanticdb-enable-gnu-global-databases)
-  :config
-  (semantic-load-enable-excessive-code-helpers)
-  (when (cedet-gnu-global-version-check t)
-    (semanticdb-enable-gnu-global-databases 'c-mode)
-    (semanticdb-enable-gnu-global-databases 'c++-mode))
-  (global-semantic-idle-completions-mode -1)
-  ;; adding includes
-  ;; (semantic-add-system-include "/usr/include/" 'c-mode)
-  ;; (add-to-list 'auto-mode-alist (cons qt4-base-dir 'c++-mode))
-  ;; (add-to-list 'semantic-lex-c-preprocessor-symbol-file (concat qt4-base-dir "/Qt/qconfig.h"))
-  ;; (global-srecode-minor-mode 1) ;; yas ?
-  )
-
-;; emacs code browser
-(use-package ecb
-  :commands (ecb-activate ecb-deactivate)
-  :init
-  (setq ecb-new-ecb-frame nil)
-  (setq ecb-layout-name 'left3)
-  (setq ecb-windows-height 0.20)
-  (setq ecb-windows-width 0.20)
-  (defvar ecb-examples-bufferinfo-buffer-name nil "otherwise it complains.")
-  (setq ecb-compile-window-height nil)
-  ;;(setq ecb-display-news-for-upgrade nil)
-  ;;(setq ecb-display-upgraded-options nil)
-  )
-
-;; C/C++
-(use-package company-c-headers
-  :defer t
-  :config
-  (setq company-c-headers-path-system '("/usr/include"))
-  (setq company-c-headers-path-user '(""))
-  (add-to-list 'company-backends 'company-c-headers))
-
-;;; LISP
-(defun my-pretty-lambda ()
-  "Make some word or string show as pretty Unicode symbols."
-  (setq prettify-symbols-alist
-        '(
-          ("lambda" . 955) ; λ
-          )))
-
-(add-hook 'lisp-mode-hook 'my-pretty-lambda)
-(global-prettify-symbols-mode 1)
-
-;; ELISP
-;; elp profiler, ielm repl, edebug debugger, reshank for refactoring.
-(add-hook 'emacs-lisp-mode 'eldoc-mode)
-(add-hook 'ielm-mode-hook 'eldoc-mode)
-
-(use-package elisp-slime-nav
-  :diminish elisp-slime-nav-mode
-  :init
-  (dolist (i '(emacs-lisp-mode-hook ielm-mode-hook help-mode-hook))
-    (add-hook i 'elisp-slime-nav-mode)))
-
-;; COMMON LISP
-(use-package slime
-  :commands (slime)
-  :defer t
-  :init
-  (setq slime-net-coding-system 'utf-8-unix)
-  (setq slime-lisp-implementations
-        '((sbcl ("sbcl")
-                :coding-system utf-8-unix
-                :program-args "--dynamic-space-size 2048")
-          (clisp ("clisp"))
-          (ecl ("ecl"))))
-
-  (setq common-lisp-hyperspec-root (expand-file-name "~/Documents/HyperSpec/"))
-  :config
-  (slime-setup '(slime-fancy))
-  (add-to-list 'semantic-inhibit-functions
-               (lambda () (derived-mode-p 'lisp-mode 'slime-repl-mode))))
-
-;; R OCTAVE JULIA ETC...
-(use-package ess
-  :defer t
-  :disabled t)
-
-;; WEB
-(use-package js2-mode
-  :mode  (("\\.js$" . js2-mode)
-          ("\\.json$" . js2-mode)))
-
-(use-package tern
-  ;; put thins into .tern_project
-  ;; {
-  ;; "libs": [
-  ;;          "browser",
-  ;;          "jquery"
-  ;;          ],
-  ;; "plugins": {
-  ;; "node": {}
-  ;; }
-  ;; }
-  :defer t
-  :config
-  (add-hook 'js-mode-hook (lambda () (tern-mode t))))
-
-(use-package nodejs-repl
-  :commands (nodejs-repl))
-
-(use-package simple-httpd
-  :defer t)
-
-(use-package markdown-mode
-  :commands (markdown-mode gfm-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown"))
-
-(use-package lorem-ipsum
-  :commands (lorem-ipsum-insert-sentences
-             lorem-ipsum-insert-paragraphs
-             lorem-ipsum-insert-list))
-
-;; ;;; C/C++
-;; (use-package ggtags ;; semantics is better.
-;;   :defer t
-;;   :bind (("M-." . ggtags-find-tag-dwim))
-;;   :config
-;;   (add-hook 'c-mode-common-hook
-;;             (lambda ()
-;;               (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-;;                 (setq-local imenu-create-index-function
-;;                             #'ggtags-build-imenu-index)
-;;                 (ggtags-mode 1)))))
-
-;; C styles: gnu, linux, bsd, java etc..
-(require 'gdb-mi)
-(add-hook 'c-mode-hook
-          (lambda ()
-            (setq-default gdb-many-windows t
-                          gdb-show-main t)
-            (setq c-default-style "gnu")))
-
-;;; STARTUP
-(add-hook 'after-init-hook
-          (lambda ()
-            (global-flycheck-mode)
-            (recentf-open-files)))
-
-;; buggy there
-(add-hook 'asm-mode-hook
-          (lambda ()
-            (aggressive-indent-mode -1)))
-
-;; IRC
-(use-package rcirc
-  :defer t
-  :config
-  (setq rcirc-default-nick "mr1yh1"
-        rcirc-default-user-name "mr1yh1"
-        rcirc-default-full-name "Omer"
-        rcirc-server-alist '(("irc.freenode.net"
-                              :nick "mr1yh1"
-                              :channels ("#emacs")))
-        rcirc-omit-responses '("JOIN" "PART" "QUIT" "NICK" "AWAY")
-        ;; auth values in .private
-        rcirc-debug-flag t)
-  (set (make-local-variable 'scroll-conservatively) 8192)
-  (rcirc-track-minor-mode 1)
-  (flyspell-mode 1))
-
-;; search
+;; WEB SEARCH
 (use-package engine-mode
   :commands (defengine engine/set-keymap-prefix engine-mode engine/get-query engine/execute-search)
   ;;(setq engine/browser-function 'eww-browse-url)
@@ -525,15 +258,201 @@
     :docstring "Search posts on emacs-devel archive.")
   (defengine github "https://github.com/search?ref=simplesearch&q=%s" :keybinding "h"))
 
-;; weather reports
-(use-package sunshine
-  :commands (sunshine-forecast)
+;; TEXT
+;; LATEX
+(use-package tex
+  :mode ("\\.tex$" . latex-mode)
+  :commands (TeX-global-PDF-mode reftex-plug-into-AUCTeX)
+  :ensure auctex
+  :init
+  (setq-default TeX-auto-save t
+                TeX-parse-self t
+                TeX-master nil
+                TeX-global-PDF-mode 1
+                TeX-default-mode 'context-mode)
   :config
-  (setq sunshine-location "Istanbul"
-        sunshine-units 'metric
-        sunshine-show-icons t
-        ;;appid is in .private
-        ))
+  (TeX-fold-mode 1)
+  (reftex-mode 1)
+  (reftex-plug-into-AUCTeX))
+
+;; MARKDOWN
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
+
+;; ORG-mode
+(use-package org-bullets
+  :commands (org-bullets-mode))
+
+(use-package org
+  :mode ("\\.org$" . org-mode)
+  :init
+  (setq-default org-replace-disputed-keys 1)
+  (setq org-todo-keywords
+        '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
+  (setq org-log-done 'time)
+  (setq org-agenda-files (list "~/Documents/org/agenda.org"))
+  :config
+  (org-bullets-mode 1))
+
+;; PROGRAMMING
+;; TEMPLATE
+(use-package yasnippet
+  :diminish yasnippet
+  :bind (:map yas-minor-mode-map
+              ("C-c y C-s" . yas-insert-snippet))
+  :config
+  (setq-default yas-prompt-functions '(yas-ido-prompt)))
+
+;;; VERSION CONTROL
+(use-package magit
+  :bind ("C-x g" . magit-status))
+
+;; COMPANY
+(use-package company
+  :diminish company-mode
+  :bind (("C-M-i" . company-manual-begin)
+         :map company-active-map
+         ("C-s" . company-select-next)
+         ("C-r" . company-select-previous)
+         ("C-d" . company-show-doc-buffer)
+         ("C-e" . company-other-backend))
+  :config
+  (setq company-idle-delay nil) ;; only manual
+  (add-to-list 'company-backends 'company-ispell)
+  (global-company-mode 1))
+
+;; FLYCHECK
+(use-package flycheck
+  :diminish flycheck-mode
+  :commands (flycheck-add-mode flycheck-select-checker)
+  :config
+  (add-hook 'c++-mode-hook
+            (lambda ()
+              (setq flycheck-gcc-language-standard "c++11")
+              (setq flycheck-clang-language-standard "c++11")))
+  (flycheck-add-mode 'html-tidy 'html-mode))
+
+;; C/CPP
+(use-package cmake-mode)
+
+(use-package ggtags
+  :diminish ggtags-mode
+  :config (ggtags-mode 1))
+
+(use-package rtags
+  :config
+  (add-hook 'c-mode-hook 'rtags-start-process-unless-running)
+  (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
+  (add-hook 'objc-mode-hook 'rtags-start-process-unless-running)
+  (setq rtags-autostart-diagnostics t)
+  (rtags-diagnostics)
+  (setq rtags-completions-enabled t)
+  (rtags-enable-standard-keybindings))
+
+(use-package flycheck-rtags)
+
+(defun my-flycheck-rtags-setup ()
+  (flycheck-select-checker 'rtags)
+  (setq-local flycheck-highlighting-mode nil) ;; RTags creates more accurate overlays.
+  (setq-local flycheck-check-syntax-automatically nil))
+
+(add-hook 'c-mode-hook #'my-flycheck-rtags-setup)
+(add-hook 'c++-mode-hook #'my-flycheck-rtags-setup)
+(add-hook 'objc-mode-hook #'my-flycheck-rtags-setup)
+
+(use-package company-rtags
+  :config
+  (push 'company-rtags company-backends))
+
+(use-package flycheck-clang-analyzer
+  :config
+  (flycheck-clang-analyzer-setup))
+
+(use-package clang-format)
+
+(use-package modern-cpp-font-lock
+  :config
+  (add-hook 'c++-mode-hook #'modern-c++-font-lock-mode))
+
+;; COMMON LISP
+(use-package slime
+  :commands (slime)
+  :defer t
+  :init
+  (setq slime-net-coding-system 'utf-8-unix)
+  (setq slime-lisp-implementations
+        '((sbcl ("sbcl")
+                :coding-system utf-8-unix
+                :program-args "--dynamic-space-size 2048")
+          (clisp ("clisp"))
+          (ecl ("ecl"))))
+
+  (setq common-lisp-hyperspec-root (expand-file-name "~/Documents/HyperSpec-7-0/HyperSpec/"))
+  :config
+  (slime-setup '(slime-fancy)))
+
+;; ELISP
+;; elp profiler, ielm repl, edebug debugger, reshank for refactoring.
+(add-hook 'emacs-lisp-mode 'eldoc-mode)
+(add-hook 'ielm-mode-hook 'eldoc-mode)
+
+(use-package elisp-slime-nav
+  :diminish elisp-slime-nav-mode
+  :init
+  (dolist (i '(emacs-lisp-mode-hook ielm-mode-hook help-mode-hook c-mode-hook))
+    (add-hook i 'elisp-slime-nav-mode)))
+
+;; R OCTAVE JULIA ETC...
+(use-package ess
+  :mode ("\\.r$" . R-mode)
+  :config
+  (setq ess-use-ido t))
+
+;; WEB
+(add-hook 'html-mode-hook 'auto-fill-mode)
+
+(use-package lorem-ipsum
+  :commands (lorem-ipsum-insert-sentences
+             lorem-ipsum-insert-paragraphs
+             lorem-ipsum-insert-list))
+
+(use-package js2-mode
+  :mode  (("\\.js$" . js2-mode)
+          ("\\.json$" . js2-mode)))
+
+;;; STARTUP
+(add-hook 'after-init-hook
+          (lambda ()
+            (global-flycheck-mode)
+            (recentf-open-files)))
+
+;; IRC
+(use-package rcirc
+  :defer t
+  :config
+  (setq rcirc-default-nick "mr1yh1"
+        rcirc-default-user-name "mr1yh1"
+        rcirc-default-full-name "Omer"
+        rcirc-server-alist '(("irc.freenode.net"
+                              :nick "mr1yh1"
+                              :channels ("#emacs")))
+        rcirc-omit-responses '("JOIN" "PART" "QUIT" "NICK" "AWAY")
+        ;; auth values in .private
+        rcirc-debug-flag t)
+  (set (make-local-variable 'scroll-conservatively) 8192)
+  (rcirc-track-minor-mode 1)
+  (flyspell-mode 1))
+
+;;GNUS
+(use-package gnus
+  :config
+  (setq gnus-select-method '(nntp "news.aioe.org"))
+  (add-to-list 'gnus-secondary-select-methods '(nntp "news.gnus.org"))
+  (add-to-list 'gnus-secondary-select-methods '(nnml "")))
 
 (provide '.emacs)
 ;;; .emacs ends here
@@ -542,29 +461,3 @@
 (load custom-file)
 
 (put 'downcase-region 'disabled nil)
-
-;; GNUS
-;; (use-package gnus
-;;   :defer t
-;;   :init
-;;   (setq gnus-read-newsrc-file nil)
-;;   (setq gnus-save-killed-list nil)
-;;   (setq gnus-check-new-newsgroups nil)
-;;   (setq gnus-select-method '(nnspool ""))
-;;   (setq gnus-secondary-select-methods '((nntp "news.gmane.org")
-;;                                         (nnmbox "")))
-;;   (setq gnus-use-cache t)
-;;   (setq mail-sources
-;;         '((file)
-;;           (pop :server "pop.mail.yahoo.com"
-;;                :port 995
-;;                :user "mr1yh1@yahoo.com"
-;;                :stream ssl
-;;                )))
-;;   (setq mail-source-delete-incoming nil)
-
-;;   (setq message-send-mail-function 'smtpmail-send-it
-;;         send-mail-function    'smtpmail-send-it
-;;         smtpmail-smtp-server  "smtp.mail.yahoo.com"
-;;         smtpmail-stream-type  'ssl
-;;         smtpmail-smtp-service 465))
